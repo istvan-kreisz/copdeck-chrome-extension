@@ -43,7 +43,7 @@ var options = {
 			'src',
 			'pages',
 			'Background',
-			'index.js'
+			'index.ts'
 		),
 		contentScript: path.join(
 			__dirname,

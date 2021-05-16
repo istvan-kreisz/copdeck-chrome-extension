@@ -3,7 +3,7 @@
 	"name": "Chrome Extension with React & Webpack",
 	"options_page": "options.html",
 	"permissions": ["storage", "activeTab", "scripting", "alarms"],
-	"host_permissions": ["https://stockx.com/*"],
+    "host_permissions": ["<all_urls>"],
 	"background": { "service_worker": "background.bundle.js" },
 	"action": {
 		"default_popup": "popup.html",
