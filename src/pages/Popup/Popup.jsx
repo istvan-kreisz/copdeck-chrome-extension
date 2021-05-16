@@ -4,6 +4,7 @@ import Greetings from '../../containers/Greetings/Greetings';
 import './Popup.css';
 
 const Popup = () => {
+	console.log('hi from popup');
 	return (
 		<div className="App">
 			<header className="App-header">
