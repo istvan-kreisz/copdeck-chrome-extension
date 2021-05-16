@@ -52,8 +52,6 @@ var options = {
 			'Content',
 			'index.js'
 		),
-
-		panel: path.join(__dirname, 'src', 'pages', 'Panel', 'index.jsx'),
 	},
 	chromeExtensionBoilerplate: {
 		notHotReload: ['contentScript'],
@@ -200,18 +198,6 @@ var options = {
 			),
 			filename: 'popup.html',
 			chunks: ['popup'],
-			cache: false,
-		}),
-		new HtmlWebpackPlugin({
-			template: path.join(
-				__dirname,
-				'src',
-				'pages',
-				'Panel',
-				'index.html'
-			),
-			filename: 'panel.html',
-			chunks: ['panel'],
 			cache: false,
 		}),
 	],
