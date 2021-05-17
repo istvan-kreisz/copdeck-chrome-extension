@@ -1,7 +1,7 @@
 {
-	"name": "chrome-extension-boilerplate-react",
-	"version": "4.0.1",
-	"description": "A chrome extension boilerplate built with React 17 and Webpack 5",
+	"name": "copdeck-sneaker-monitor",
+	"version": "1.0.0",
+	"description": "CopDeck sneaker price monitoring Chrome Extension. Currently supporting the following stores: StockX, Klekt, Restocks.",
 	"license": "MIT",
 	"repository": {
 		"type": "git",
