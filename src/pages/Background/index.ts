@@ -1,12 +1,13 @@
-import { searchStockx } from 'copdeck-scraper'
+import { browserAPI } from 'copdeck-scraper'
 
 chrome.alarms.onAlarm.addListener(async () => {})
 
 chrome.runtime.onMessage.addListener(async (msg, sender, sendResponse) => {
 	if (msg.search) {
 		sendResponse('got it')
-		const names = await searchStockx(msg.search)
-		chrome.storage.sync.set({ names: names })
+		const items = await browserAPI.searchItems(msg.search)
+		const stringified = JSON.stringify(items)
+		chrome.storage.sync.set({ searchResults: stringified })
 	}
 })
 

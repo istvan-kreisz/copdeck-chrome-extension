@@ -4,9 +4,10 @@ import Greetings from '../../containers/Greetings/Greetings';
 import './Popup.css';
 import  { useRef, useEffect, useState } from 'react'
 import { assert, string, number, array } from 'superstruct';
+import { Item } from 'copdeck-scraper/dist/types';
 
 const Popup = () => {
-    const [searchResults, setSearchResults] = useState([])
+    const [searchResults, setSearchResults] = useState<Array<Item>>([])
     const searchBar = useRef()
 
     const search = () => {
@@ -20,9 +21,11 @@ const Popup = () => {
     useEffect(() => {
         chrome.storage.onChanged.addListener(function (changes, namespace) {
             for (let [key, { oldValue, newValue }] of Object.entries(changes)) {
-                if (key === 'names') {
-                    assert(newValue, array(string()))
-                    setSearchResults(newValue)
+                if (key === 'searchResults') {
+                    assert(newValue, string())
+                    const parsedItems = JSON.parse(newValue)
+                    assert(parsedItems, array(Item))
+                    setSearchResults(parsedItems)
                 }
             }
         });
