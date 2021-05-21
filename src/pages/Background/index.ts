@@ -10,7 +10,8 @@ chrome.alarms.onAlarm.addListener(async () => {
 
 	getAlertsWithItems((alerts) => {
 		alerts.forEach(([alert, item]) => {
-			if (item.updated)
+			if (item.updated) {
+			}
 		})
 	})
 	console.log('yooo')
@@ -36,18 +37,17 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 	}
 })
 
+// chrome.runtime.onInstalled.addListener(() => {
+// 				chrome.storage.sync.set({ refreshPerriod: 5 }, () => {
 
-chrome.runtime.onInstalled.addListener(() => {
-				chrome.storage.sync.set({ refreshPerriod: 5 }, () => {
+//                 })
 
-                })
-
-	chrome.alarms.get('copdeckAlarm', (a) => {
-		if (!a) {
-			chrome.alarms.create('copdeckAlarm', { periodInMinutes: 0.1 })
-		}
-	})
-})
+// 	chrome.alarms.get('copdeckAlarm', (a) => {
+// 		if (!a) {
+// 			chrome.alarms.create('copdeckAlarm', { periodInMinutes: 0.1 })
+// 		}
+// 	})
+// })
 
 // todo: add uninstall survey
 // chrome.runtime.onInstalled.addListener((reason) => {

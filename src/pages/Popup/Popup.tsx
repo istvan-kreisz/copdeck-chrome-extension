@@ -19,7 +19,7 @@ const Popup = () => {
 				className="App"
 			>
 				<header className="App-header"></header>
-				<main>
+				<main style={{ marginBottom: '2rem' }}>
 					<h3 style={{ display: activeTab === 'settings' ? 'block' : 'none' }}>
 						<SettingsTab></SettingsTab>
 					</h3>
@@ -32,8 +32,10 @@ const Popup = () => {
 				</main>
 				<footer
 					style={{
-						position: 'absolute',
+						position: 'fixed',
 						display: 'flex',
+						justifyItems: 'stretch',
+						justifyContent: 'space-between',
 						height: '60px',
 						bottom: 0,
 						left: 0,

@@ -2,6 +2,7 @@ import React from 'react'
 import { useEffect, useState, useRef } from 'react'
 import { assert } from 'superstruct'
 import { Item } from 'copdeck-scraper/dist/types'
+import { itemImageURL, itemBestPrice } from 'copdeck-scraper'
 import AddAlertModal from './Main/AddAlertModal'
 
 const ItemDetail = (prop: {
@@ -46,7 +47,7 @@ const ItemDetail = (prop: {
 				}}
 			>
 				<button onClick={backClicked}> Back</button>
-				<img src={prop.selectedItem.storeInfo?.[0].imageURL ?? ''} alt="" />
+				<img src={itemImageURL(prop.selectedItem)} alt="" />
 				<h1>{prop.selectedItem.name}</h1>
 				<h2>{prop.selectedItem.id}</h2>
 				<p>{prop.selectedItem.retailPrice}</p>
