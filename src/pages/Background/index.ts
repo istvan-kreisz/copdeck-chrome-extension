@@ -1,8 +1,20 @@
 import { browserAPI } from 'copdeck-scraper'
 import { assert, string, number, array } from 'superstruct'
 import { Item } from 'copdeck-scraper/dist/types'
+import { databaseCoordinator } from '../services/databaseCoordinator'
 
-chrome.alarms.onAlarm.addListener(async () => {})
+const refreshPeriod = 5
+
+chrome.alarms.onAlarm.addListener(async () => {
+	const { getAlertsWithItems, deleteAlert } = databaseCoordinator()
+
+	getAlertsWithItems((alerts) => {
+		alerts.forEach(([alert, item]) => {
+			if (item.updated)
+		})
+	})
+	console.log('yooo')
+})
 
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 	if (msg.search) {
@@ -24,10 +36,15 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 	}
 })
 
+
 chrome.runtime.onInstalled.addListener(() => {
+				chrome.storage.sync.set({ refreshPerriod: 5 }, () => {
+
+                })
+
 	chrome.alarms.get('copdeckAlarm', (a) => {
 		if (!a) {
-			chrome.alarms.create('copdeckAlarm', { delayInMinutes: 0.1 })
+			chrome.alarms.create('copdeckAlarm', { periodInMinutes: 0.1 })
 		}
 	})
 })

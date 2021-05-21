@@ -1,9 +1,11 @@
-import { array, is } from 'superstruct'
+import { array, assert, is, number } from 'superstruct'
 import { Item, PriceAlert } from 'copdeck-scraper/dist/types'
 
 type AlertWithItem = [PriceAlert, Item]
 
 export const databaseCoordinator = () => {
+	const defaultRefreshPeriod = 10
+
 	const getItems = (callback: (alerts: Array<Item>) => void) => {
 		chrome.storage.sync.get(['items'], (result) => {
 			const items = result.items
@@ -57,9 +59,10 @@ export const databaseCoordinator = () => {
 
 	const saveItem = (item: Item) => {
 		getItems((items) => {
-			if (!items.find((i) => item.id === i.id)) {
-				chrome.storage.sync.set({ items: [...items, item] })
-			}
+			const newItems = items.filter((i) => item.id !== i.id)
+			item.updated = new Date().getTime()
+			newItems.push(item)
+			chrome.storage.sync.set({ items: newItems })
 		})
 	}
 
@@ -67,11 +70,7 @@ export const databaseCoordinator = () => {
 		getAlerts((alerts) => {
 			chrome.storage.sync.set({ alerts: [...alerts, alert] }, () => {
 				if (!chrome.runtime.lastError) {
-					getItems((items) => {
-						if (!items.find((item) => item.id === alert.itemId)) {
-							saveItem(item)
-						}
-					})
+					saveItem(item)
 				}
 			})
 		})
@@ -112,18 +111,42 @@ export const databaseCoordinator = () => {
 
 	const updateLastNotificationDateForAlert = (alert: PriceAlert) => {
 		getAlerts((alerts) => {
-			const savedAlert = alerts.find((a) => alert.id !== a.id)
+			const savedAlert = alerts.find((a) => alert.id === a.id)
 			if (savedAlert) {
-				savedAlert.lastNotificationSent = new Date()
+				savedAlert.lastNotificationSent = new Date().getTime()
 				chrome.storage.sync.set({ alerts: alerts })
+			}
+		})
+	}
+
+	const setRefreshPeriod = (newPeriod: number, completion: (errorMessage?: string) => void) => {
+		assert(newPeriod, number())
+		if (newPeriod < 5) {
+			completion('Must be higher than 1')
+			return
+		}
+		chrome.storage.sync.set({ refreshPeriod: newPeriod }, () => {
+			completion(chrome.runtime.lastError?.message)
+		})
+	}
+
+	const getRefreshPeriod = (callback: (period: number) => void) => {
+		chrome.storage.sync.get(['refreshPeriod'], (result) => {
+			const refreshPeriod = result.refreshPeriod
+			if (is(refreshPeriod, number())) {
+				callback(refreshPeriod)
+			} else {
+				callback(defaultRefreshPeriod)
 			}
 		})
 	}
 
 	return {
 		getAlertsWithItems: getAlertsWithItems,
+		saveItem: saveItem,
 		saveAlert: saveAlert,
 		deleteAlert: deleteAlert,
 		updateLastNotificationDateForAlert: updateLastNotificationDateForAlert,
+		getRefreshPeriod: getRefreshPeriod,
 	}
 }
