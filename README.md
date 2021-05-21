@@ -11,11 +11,11 @@
 
 ## Announcements
 
-- **_This boilerplate adopts [Manifest V3](https://developer.chrome.com/docs/extensions/mv3/intro/mv3-overview/)!_** For V2 users, please check out the [manifest-v2](https://github.com/lxieyang/chrome-extension-boilerplate-react/tree/manifest-v2) branch, or use version [3.x](https://www.npmjs.com/package/chrome-extension-boilerplate-react/v/3.3.0).
-  - Check out the [Manifest V3 Migration Guide](https://developer.chrome.com/docs/extensions/mv3/intro/mv3-migration/).
-- Recently added [devtools](https://developer.chrome.com/docs/extensions/mv3/devtools/) Support! Thanks [GeekaholicLin](https://github.com/lxieyang/chrome-extension-boilerplate-react/issues/17)!
-- Recently updated from React ~~16~~ to **17** and Webpack ~~4~~ to **5**!
-- Recently added [TypeScript](https://www.typescriptlang.org/) Support!
+-   **_This boilerplate adopts [Manifest V3](https://developer.chrome.com/docs/extensions/mv3/intro/mv3-overview/)!_** For V2 users, please check out the [manifest-v2](https://github.com/lxieyang/chrome-extension-boilerplate-react/tree/manifest-v2) branch, or use version [3.x](https://www.npmjs.com/package/chrome-extension-boilerplate-react/v/3.3.0).
+    -   Check out the [Manifest V3 Migration Guide](https://developer.chrome.com/docs/extensions/mv3/intro/mv3-migration/).
+-   Recently added [devtools](https://developer.chrome.com/docs/extensions/mv3/devtools/) Support! Thanks [GeekaholicLin](https://github.com/lxieyang/chrome-extension-boilerplate-react/issues/17)!
+-   Recently updated from React ~~16~~ to **17** and Webpack ~~4~~ to **5**!
+-   Recently added [TypeScript](https://www.typescriptlang.org/) Support!
 
 ## Features
 
@@ -23,13 +23,13 @@ This is a basic Chrome Extensions boilerplate to help you write modular and mode
 
 This boilerplate is updated with:
 
-- [Chrome Extension Manifest V3](https://developer.chrome.com/docs/extensions/mv3/intro/mv3-overview/)
-- [React 17](https://reactjs.org)
-- [Webpack 5](https://webpack.js.org/)
-- [React Hot Loader](https://github.com/gaearon/react-hot-loader)
-- [eslint-config-react-app](https://www.npmjs.com/package/eslint-config-react-app)
-- [Prettier](https://prettier.io/)
-- [TypeScript](https://www.typescriptlang.org/)
+-   [Chrome Extension Manifest V3](https://developer.chrome.com/docs/extensions/mv3/intro/mv3-overview/)
+-   [React 17](https://reactjs.org)
+-   [Webpack 5](https://webpack.js.org/)
+-   [React Hot Loader](https://github.com/gaearon/react-hot-loader)
+-   [eslint-config-react-app](https://www.npmjs.com/package/eslint-config-react-app)
+-   [Prettier](https://prettier.io/)
+-   [TypeScript](https://www.typescriptlang.org/)
 
 This boilerplate is heavily inspired by and adapted from [https://github.com/samuelsimoes/chrome-extension-webpack-boilerplate](https://github.com/samuelsimoes/chrome-extension-webpack-boilerplate), with additional support for React 17 features and Webpack 5.
 
@@ -46,10 +46,10 @@ Please open up an issue to nudge me to keep the npm packages up-to-date. FYI, it
 5. Run `npm install` to install the dependencies.
 6. Run `npm start`
 7. Load your extension on Chrome following:
-   1. Access `chrome://extensions/`
-   2. Check `Developer mode`
-   3. Click on `Load unpacked extension`
-   4. Select the `build` folder.
+    1. Access `chrome://extensions/`
+    2. Check `Developer mode`
+    3. Click on `Load unpacked extension`
+    4. Select the `build` folder.
 8. Happy hacking.
 
 ## Structure
@@ -95,12 +95,12 @@ and on your `src/manifest.json`:
 
 ```json
 {
-  "content_scripts": [
-    {
-      "matches": ["https://www.google.com/*"],
-      "js": ["myContentScript.bundle.js"]
-    }
-  ]
+	"content_scripts": [
+		{
+			"matches": ["https://www.google.com/*"],
+			"js": ["myContentScript.bundle.js"]
+		}
+	]
 }
 ```
 
@@ -129,22 +129,22 @@ To this task this boilerplate import the file `./secrets.<THE-NODE_ENV>.js` on y
 _./secrets.development.js_
 
 ```js
-export default { key: '123' };
+export default { key: '123' }
 ```
 
 _./src/popup.js_
 
 ```js
-import secrets from 'secrets';
-ApiCall({ key: secrets.key });
+import secrets from 'secrets'
+ApiCall({ key: secrets.key })
 ```
 
 :point_right: The files with name `secrets.*.js` already are ignored on the repository.
 
 ## Resources:
 
-- [Webpack documentation](https://webpack.js.org/concepts/)
-- [Chrome Extension documentation](https://developer.chrome.com/extensions/getstarted)
+-   [Webpack documentation](https://webpack.js.org/concepts/)
+-   [Chrome Extension documentation](https://developer.chrome.com/extensions/getstarted)
 
 ---
 

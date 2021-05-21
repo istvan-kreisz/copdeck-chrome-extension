@@ -1,10 +1,8 @@
 import React from 'react'
-import './Popup.css'
 import { useRef, useState } from 'react'
-import { assert } from 'superstruct'
 import { Item, Store, StorePrices, PriceAlert } from 'copdeck-scraper/dist/types'
 import { v4 as uuidv4 } from 'uuid'
-import { databaseCoordinator } from '../services/databaseCoordinator'
+import { databaseCoordinator } from '../../services/databaseCoordinator'
 
 const AddAlertModal = (prop: {
 	selectedItem: Item
@@ -17,7 +15,7 @@ const AddAlertModal = (prop: {
 	const storeSelector = useRef<HTMLDivElement>(null)
 	const priceField = useRef<HTMLInputElement>(null)
 
-	const { saveItem, saveAlert } = databaseCoordinator()
+	const { saveAlert } = databaseCoordinator()
 
 	const selectableStores = (): StorePrices[] => {
 		return prop.selectedItem?.storePrices.filter((prices) => prices.inventory.length) ?? []
@@ -97,8 +95,7 @@ const AddAlertModal = (prop: {
 			targetSize: selectedSize,
 			stores: selectedStores.map((store) => store.store),
 		}
-		saveAlert(newAlert)
-		saveItem(prop.selectedItem)
+		saveAlert(newAlert, prop.selectedItem)
 	}
 
 	return (

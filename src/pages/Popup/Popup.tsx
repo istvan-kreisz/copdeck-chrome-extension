@@ -1,59 +1,50 @@
 import React from 'react'
 import './Popup.css'
-import { useRef, useState } from 'react'
-import { assert, array } from 'superstruct'
-import { Item } from 'copdeck-scraper/dist/types'
-import ItemDetail from './ItemDetail'
+import MainTab from './Main/MainTab'
+import SettingsTab from './Settings/SettingsTab'
+import AlertsTab from './Alerts/AlertsTab'
+import { useState } from 'react'
 
 const Popup = () => {
-	const [searchResults, setSearchResults] = useState<Item[]>([])
-	const [selectedItem, setSelectedItem] = useState<Item | null>()
+	const [activeTab, setActiveTab] = useState<'main' | 'settings' | 'alerts'>('main')
 
-	const searchBar = useRef<HTMLInputElement>(null)
-
-	const search = () => {
-		if (searchBar.current?.value) {
-			chrome.runtime.sendMessage({ search: searchBar.current?.value }, (response) => {
-				assert(response, array(Item))
-				setSearchResults(response)
-			})
-		}
-	}
-
-	const clickedItem = (item: Item) => {
-		if (item.id !== selectedItem?.id) {
-			setSelectedItem(item)
-		}
+	const selectedTab = (tab: 'main' | 'settings' | 'alerts') => {
+		setActiveTab(tab)
 	}
 
 	return (
 		<>
-			<div className="App">
+			<div
+				style={{ position: 'relative', height: '400px', overflow: 'scroll' }}
+				className="App"
+			>
 				<header className="App-header"></header>
 				<main>
-					<input ref={searchBar} type="text" />
-					<button onClick={search}>Search yeezys</button>
-					<ul className="searchResults">
-						{searchResults.map((item, index) => {
-							return (
-								<li
-									onClick={clickedItem.bind(null, item)}
-									className="searchResult"
-									key={item.id}
-								>
-									{item.name}
-								</li>
-							)
-						})}
-					</ul>
+					<h3 style={{ display: activeTab === 'settings' ? 'block' : 'none' }}>
+						<SettingsTab></SettingsTab>
+					</h3>
+					<div style={{ display: activeTab === 'main' ? 'block' : 'none' }}>
+						<MainTab></MainTab>
+					</div>
+					<div style={{ display: activeTab === 'alerts' ? 'block' : 'none' }}>
+						<AlertsTab activeTab={activeTab}></AlertsTab>
+					</div>
 				</main>
+				<footer
+					style={{
+						position: 'absolute',
+						display: 'flex',
+						height: '60px',
+						bottom: 0,
+						left: 0,
+						right: 0,
+					}}
+				>
+					<button onClick={selectedTab.bind(null, 'settings')}>Settings</button>
+					<button onClick={selectedTab.bind(null, 'main')}>Search</button>
+					<button onClick={selectedTab.bind(null, 'alerts')}>Alerts</button>
+				</footer>
 			</div>
-			{selectedItem ? (
-				<ItemDetail
-					selectedItem={selectedItem}
-					setSelectedItem={setSelectedItem}
-				></ItemDetail>
-			) : null}
 		</>
 	)
 }

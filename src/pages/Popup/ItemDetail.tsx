@@ -1,21 +1,32 @@
 import React from 'react'
-import './Popup.css'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { assert } from 'superstruct'
 import { Item } from 'copdeck-scraper/dist/types'
-import AddAlertModal from './AddAlertModal'
+import AddAlertModal from './Main/AddAlertModal'
 
-const ItemDetail = (prop: { selectedItem: Item; setSelectedItem: (item: Item | null) => void }) => {
+const ItemDetail = (prop: {
+	selectedItem: Item
+	setSelectedItem: (callback: (item: Item | null | undefined) => Item | null | undefined) => void
+}) => {
 	const [showAddPriceAlertModal, setShowAddPriceAlertModal] = useState(false)
+	const didClickBack = useRef(false)
 
 	useEffect(() => {
+		didClickBack.current = false
 		if (prop.selectedItem && prop.selectedItem.storePrices.length == 0) {
 			chrome.runtime.sendMessage({ getItemDetails: prop.selectedItem }, (item) => {
 				assert(item, Item)
-				prop.setSelectedItem(item)
+				if (!didClickBack.current) {
+					prop.setSelectedItem((current) => (current ? item : null))
+				}
 			})
 		}
-	}, [prop.selectedItem])
+	}, [])
+
+	const backClicked = () => {
+		didClickBack.current = true
+		prop.setSelectedItem(() => null)
+	}
 
 	return (
 		<>
@@ -34,7 +45,7 @@ const ItemDetail = (prop: { selectedItem: Item; setSelectedItem: (item: Item | n
 					overflow: 'scroll',
 				}}
 			>
-				<button onClick={prop.setSelectedItem.bind(null, null)}> Back</button>
+				<button onClick={backClicked}> Back</button>
 				<img src={prop.selectedItem.storeInfo?.[0].imageURL ?? ''} alt="" />
 				<h1>{prop.selectedItem.name}</h1>
 				<h2>{prop.selectedItem.id}</h2>

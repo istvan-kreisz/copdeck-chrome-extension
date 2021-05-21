@@ -1,9 +1,8 @@
 {
 	"manifest_version": 3,
 	"name": "Chrome Extension with React & Webpack",
-	"options_page": "options.html",
 	"permissions": ["storage", "activeTab", "scripting", "alarms"],
-    "host_permissions": ["<all_urls>"],
+	"host_permissions": ["<all_urls>"],
 	"background": { "service_worker": "background.bundle.js" },
 	"action": {
 		"default_popup": "popup.html",
@@ -12,16 +11,9 @@
 	"icons": {
 		"128": "icon-128.png"
 	},
-	"content_scripts": [
-		{
-			"matches": ["http://*/*", "https://*/*", "<all_urls>"],
-			"js": ["contentScript.bundle.js"],
-			"css": ["content.styles.css"]
-		}
-	],
 	"web_accessible_resources": [
 		{
-			"resources": ["content.styles.css", "icon-128.png", "icon-34.png"],
+			"resources": ["icon-128.png", "icon-34.png"],
 			"matches": []
 		}
 	]

@@ -1,19 +1,10 @@
 import { array, is } from 'superstruct'
 import { Item, PriceAlert } from 'copdeck-scraper/dist/types'
 
-export const databaseCoordinator = () => {
-	const getSavedAlerts = (callback: (alerts: Array<PriceAlert>) => void) => {
-		chrome.storage.sync.get(['alerts'], (result) => {
-			const alerts = result.alerts
-			if (is(alerts, array(PriceAlert))) {
-				callback(alerts)
-			} else {
-				callback([])
-			}
-		})
-	}
+type AlertWithItem = [PriceAlert, Item]
 
-	const getSavedItems = (callback: (alerts: Array<Item>) => void) => {
+export const databaseCoordinator = () => {
+	const getItems = (callback: (alerts: Array<Item>) => void) => {
 		chrome.storage.sync.get(['items'], (result) => {
 			const items = result.items
 			if (is(items, array(Item))) {
@@ -24,22 +15,70 @@ export const databaseCoordinator = () => {
 		})
 	}
 
+	const getAlerts = (callback: (alerts: Array<PriceAlert>) => void) => {
+		chrome.storage.sync.get(['alerts'], (result) => {
+			const alerts = result.alerts
+			if (is(alerts, array(PriceAlert))) {
+				callback(alerts)
+			} else {
+				callback([])
+			}
+		})
+	}
+
+	const getAlertsWithItems = (callback: (alertsWithItems: Array<AlertWithItem>) => void) => {
+		const alertsPromise = new Promise<Array<PriceAlert>>((resolve) => {
+			getAlerts((alerts) => {
+				resolve(alerts)
+			})
+		})
+		const itemsPromise = new Promise<Array<Item>>((resolve) => {
+			getItems((items) => {
+				resolve(items)
+			})
+		})
+		Promise.all([alertsPromise, itemsPromise]).then((values) => {
+			if (values && values.length === 2) {
+				const alerts = values[0]
+				const items = values[1]
+				const alertsWithItems: AlertWithItem[] = []
+				alerts.forEach((alert) => {
+					const item = items.find((item) => item.id === alert.itemId)
+					if (item) {
+						alertsWithItems.push([alert, item])
+					}
+				})
+				callback(alertsWithItems)
+			} else {
+				callback([])
+			}
+		})
+	}
+
 	const saveItem = (item: Item) => {
-		getSavedItems((items) => {
+		getItems((items) => {
 			if (!items.find((i) => item.id === i.id)) {
 				chrome.storage.sync.set({ items: [...items, item] })
 			}
 		})
 	}
 
-	const saveAlert = (alert: PriceAlert) => {
-		getSavedAlerts((alerts) => {
-			chrome.storage.sync.set({ alerts: [...alerts, alert] })
+	const saveAlert = (alert: PriceAlert, item: Item) => {
+		getAlerts((alerts) => {
+			chrome.storage.sync.set({ alerts: [...alerts, alert] }, () => {
+				if (!chrome.runtime.lastError) {
+					getItems((items) => {
+						if (!items.find((item) => item.id === alert.itemId)) {
+							saveItem(item)
+						}
+					})
+				}
+			})
 		})
 	}
 
 	const deleteItem = (item: Item) => {
-		getSavedItems((items) => {
+		getItems((items) => {
 			const newItems = items.filter((i) => item.id !== i.id)
 			if (newItems.length !== items.length) {
 				chrome.storage.sync.set({ items: newItems })
@@ -47,20 +86,44 @@ export const databaseCoordinator = () => {
 		})
 	}
 
-	const deleteAlert = (alert: PriceAlert) => {
-		getSavedAlerts((alerts) => {
-			const newAlerts = alerts.filter((a) => alert.id !== a.id)
-			if (newAlerts.length !== alerts.length) {
-				chrome.storage.sync.set({ items: newAlerts })
+	const deleteItemWithId = (itemId: string) => {
+		getItems((items) => {
+			const newItems = items.filter((i) => itemId !== i.id)
+			if (newItems.length !== items.length) {
+				chrome.storage.sync.set({ items: newItems })
 			}
 		})
 	}
+
+	const deleteAlert = (alert: PriceAlert) => {
+		getAlerts((alerts) => {
+			const newAlerts = alerts.filter((a) => alert.id !== a.id)
+			if (newAlerts.length !== alerts.length) {
+				chrome.storage.sync.set({ alerts: newAlerts }, () => {
+					if (!chrome.runtime.lastError) {
+						if (!newAlerts.find((a) => a.itemId === alert.itemId)) {
+							deleteItemWithId(alert.itemId)
+						}
+					}
+				})
+			}
+		})
+	}
+
+	const updateLastNotificationDateForAlert = (alert: PriceAlert) => {
+		getAlerts((alerts) => {
+			const savedAlert = alerts.find((a) => alert.id !== a.id)
+			if (savedAlert) {
+				savedAlert.lastNotificationSent = new Date()
+				chrome.storage.sync.set({ alerts: alerts })
+			}
+		})
+	}
+
 	return {
-		getSavedAlerts: getSavedAlerts,
-		getSavedItems: getSavedItems,
-		saveItem: saveItem,
+		getAlertsWithItems: getAlertsWithItems,
 		saveAlert: saveAlert,
-		deleteItem: deleteItem,
 		deleteAlert: deleteAlert,
+		updateLastNotificationDateForAlert: updateLastNotificationDateForAlert,
 	}
 }
