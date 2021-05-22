@@ -1,10 +1,15 @@
 import { array, assert, is, number } from 'superstruct'
 import { Item, PriceAlert } from 'copdeck-scraper/dist/types'
+import { Settings } from '../utils/types'
 
 type AlertWithItem = [PriceAlert, Item]
 
 export const databaseCoordinator = () => {
-	const defaultRefreshPeriod = 10
+	const defaultSettings: Settings = {
+		currency: 'EUR',
+		updateInterval: 10,
+		proxies: undefined,
+	}
 
 	const getItems = (callback: (alerts: Array<Item>) => void) => {
 		chrome.storage.sync.get(['items'], (result) => {
@@ -24,6 +29,17 @@ export const databaseCoordinator = () => {
 				callback(alerts)
 			} else {
 				callback([])
+			}
+		})
+	}
+
+	const getSettings = (callback: (settings: Settings) => void) => {
+		chrome.storage.sync.get(['settings'], (result) => {
+			const settings = result.settings
+			if (is(settings, Settings)) {
+				callback(settings)
+			} else {
+				callback(defaultSettings)
 			}
 		})
 	}
@@ -76,6 +92,10 @@ export const databaseCoordinator = () => {
 		})
 	}
 
+	const saveSettings = (settings: Settings) => {
+		chrome.storage.sync.set({ settings: settings })
+	}
+
 	const deleteItem = (item: Item) => {
 		getItems((items) => {
 			const newItems = items.filter((i) => item.id !== i.id)
@@ -119,34 +139,13 @@ export const databaseCoordinator = () => {
 		})
 	}
 
-	const setRefreshPeriod = (newPeriod: number, completion: (errorMessage?: string) => void) => {
-		assert(newPeriod, number())
-		if (newPeriod < 5) {
-			completion('Must be higher than 1')
-			return
-		}
-		chrome.storage.sync.set({ refreshPeriod: newPeriod }, () => {
-			completion(chrome.runtime.lastError?.message)
-		})
-	}
-
-	const getRefreshPeriod = (callback: (period: number) => void) => {
-		chrome.storage.sync.get(['refreshPeriod'], (result) => {
-			const refreshPeriod = result.refreshPeriod
-			if (is(refreshPeriod, number())) {
-				callback(refreshPeriod)
-			} else {
-				callback(defaultRefreshPeriod)
-			}
-		})
-	}
-
 	return {
 		getAlertsWithItems: getAlertsWithItems,
+		getSettings: getSettings,
 		saveItem: saveItem,
 		saveAlert: saveAlert,
+		saveSettings: saveSettings,
 		deleteAlert: deleteAlert,
 		updateLastNotificationDateForAlert: updateLastNotificationDateForAlert,
-		getRefreshPeriod: getRefreshPeriod,
 	}
 }

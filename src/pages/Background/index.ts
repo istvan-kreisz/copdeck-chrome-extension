@@ -2,11 +2,14 @@ import { browserAPI } from 'copdeck-scraper'
 import { assert, string, number, array } from 'superstruct'
 import { Item } from 'copdeck-scraper/dist/types'
 import { databaseCoordinator } from '../services/databaseCoordinator'
+import { Settings } from '../utils/types'
+import { parse, stringify } from '../utils/proxyparser'
 
-const refreshPeriod = 5
+const minUpdateInterval = 1
+const maxUpdateInterval = 1440
 
 chrome.alarms.onAlarm.addListener(async () => {
-	const { getAlertsWithItems, deleteAlert } = databaseCoordinator()
+	const { getAlertsWithItems } = databaseCoordinator()
 
 	getAlertsWithItems((alerts) => {
 		alerts.forEach(([alert, item]) => {
@@ -34,6 +37,32 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 			sendResponse(itemWithPrices)
 		})()
 		return true
+	} else if (msg.settings) {
+		const { saveSettings } = databaseCoordinator()
+
+		;(async () => {
+			const item = msg.settings
+			assert(item, Settings)
+
+			let proxiesString = item.proxies
+			if (proxiesString) {
+				try {
+					proxiesString = stringify(parse(proxiesString))
+				} catch (err) {
+					proxiesString = undefined
+					console.log(err)
+				}
+			}
+			item.proxies = proxiesString
+			if (item.updateInterval < minUpdateInterval) {
+				item.updateInterval = minUpdateInterval
+			} else if (item.updateInterval > maxUpdateInterval) {
+				item.updateInterval = maxUpdateInterval
+			}
+			console.log(item)
+			saveSettings(item)
+		})()
+		return
 	}
 })
 
