@@ -8,11 +8,13 @@
 		"url": "https://github.com/lxieyang/chrome-extension-boilerplate-react.git"
 	},
 	"scripts": {
+		"link": "npm link copdeck-scraper",
 		"build": "node utils/build.js",
 		"start": "node utils/webserver.js",
 		"prettier": "prettier --write '**/*.{js,jsx,css,html}'"
 	},
 	"dependencies": {
+		"@heroicons/react": "^1.0.1",
 		"@hot-loader/react-dom": "^17.0.1",
 		"@types/chrome": "0.0.141",
 		"@types/react": "^17.0.6",

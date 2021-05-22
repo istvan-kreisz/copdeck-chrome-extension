@@ -1,5 +1,4 @@
 import React from 'react'
-// import './Popup.css'
 import { useState, useRef } from 'react'
 import { assert, array } from 'superstruct'
 import { Item } from 'copdeck-scraper/dist/types'
@@ -27,7 +26,7 @@ const MainTab = () => {
 	}
 
 	return (
-		<div style={{ height: '400px' }}>
+		<div className="bg-transparent">
 			<input ref={searchBar} type="text" />
 			<button onClick={search}>Search yeezys</button>
 			<ul className="searchResults">
