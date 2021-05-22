@@ -1,6 +1,6 @@
-import { browserAPI } from 'copdeck-scraper'
+import { browserAPI, promiseAllSkippingErrors, notEmpty } from 'copdeck-scraper'
 import { assert, string, number, array } from 'superstruct'
-import { Item } from 'copdeck-scraper/dist/types'
+import { Item, PriceAlert } from 'copdeck-scraper/dist/types'
 import { databaseCoordinator } from '../services/databaseCoordinator'
 import { Settings } from '../utils/types'
 import { parse, stringify } from '../utils/proxyparser'
@@ -8,21 +8,47 @@ import { parse, stringify } from '../utils/proxyparser'
 const minUpdateInterval = 1
 const maxUpdateInterval = 1440
 
-chrome.alarms.onAlarm.addListener(async () => {
-	const { getAlertsWithItems } = databaseCoordinator()
+const updatePrices = async () => {
+	const { getItems, saveItems, getAlerts, updateItems, getSettings } = databaseCoordinator()
 
-	getAlertsWithItems((alerts) => {
-		alerts.forEach(([alert, item]) => {
-			if (item.updated) {
+	const settings = await getSettings()
+	const savedAlerts = await getAlerts()
+	const savedItems = await getItems()
+
+	// delete items without alerts
+	const activeItems = savedItems.filter((item) =>
+		savedAlerts.find((alert) => alert.itemId === item.id)
+	)
+	if (activeItems.length !== savedItems.length) {
+		await saveItems(activeItems)
+	}
+
+	// refresh items
+	const result = await promiseAllSkippingErrors(
+		activeItems.map((item) => {
+			const lastUpdated = item.updated
+			if (
+				(lastUpdated &&
+					lastUpdated < new Date().getTime() - 60 * 1000 * settings.updateInterval) ||
+				!lastUpdated
+			) {
+				return browserAPI.getItemPrices(item)
+			} else {
+				return new Promise<Item>((resolve, reject) => reject())
 			}
 		})
-	})
-	console.log('yooo')
-})
+	)
+
+	const items = result.filter((item) => item.storePrices && item.storePrices.length)
+	if (items && items.length) {
+		await updateItems(items)
+	}
+}
 
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 	if (msg.search) {
 		;(async () => {
+			await updatePrices()
 			const searchTerm = msg.search
 			assert(searchTerm, string())
 			const items = await browserAPI.searchItems(searchTerm)
@@ -66,17 +92,18 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 	}
 })
 
-// chrome.runtime.onInstalled.addListener(() => {
-// 				chrome.storage.sync.set({ refreshPerriod: 5 }, () => {
+chrome.alarms.onAlarm.addListener(async () => {
+	await updatePrices()
+})
 
-//                 })
-
-// 	chrome.alarms.get('copdeckAlarm', (a) => {
-// 		if (!a) {
-// 			chrome.alarms.create('copdeckAlarm', { periodInMinutes: 0.1 })
-// 		}
-// 	})
-// })
+chrome.runtime.onInstalled.addListener(async () => {
+	chrome.alarms.clearAll()
+	// chrome.alarms.get('copdeckAlarm', (a) => {
+	// 	if (!a) {
+	// 		chrome.alarms.create('copdeckAlarm', { periodInMinutes: 0.1 })
+	// 	}
+	// })
+})
 
 // todo: add uninstall survey
 // chrome.runtime.onInstalled.addListener((reason) => {

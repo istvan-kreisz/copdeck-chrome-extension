@@ -14,9 +14,10 @@ const AlertsTab = (prop: { activeTab: 'main' | 'settings' | 'alerts' }) => {
 
 	useEffect(() => {
 		if (prop.activeTab === 'alerts') {
-			getAlertsWithItems((alertsWithItems) => {
+			;(async () => {
+				const alertsWithItems = await getAlertsWithItems()
 				setPriceAlerts(alertsWithItems)
-			})
+			})()
 		}
 	}, [prop.activeTab])
 
