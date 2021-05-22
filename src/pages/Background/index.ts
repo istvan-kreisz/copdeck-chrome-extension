@@ -45,9 +45,34 @@ const updatePrices = async () => {
 	}
 }
 
+const fetchAndCache = async (item: Item) => {
+	const { cacheItem } = databaseCoordinator()
+	const newItem = await browserAPI.getItemPrices(item)
+	console.log('fetched')
+	await cacheItem(newItem)
+	return newItem
+}
+
+const getItemDetails = async (item: Item) => {
+	const { getItemWithId } = databaseCoordinator()
+
+	try {
+		const savedItem = await getItemWithId(item.id)
+		if (savedItem) {
+			console.log(savedItem)
+			return savedItem
+		} else {
+			return fetchAndCache(item)
+		}
+	} catch (err) {
+		return fetchAndCache(item)
+	}
+}
+
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 	if (msg.search) {
 		;(async () => {
+			// todo remove
 			await updatePrices()
 			const searchTerm = msg.search
 			assert(searchTerm, string())
@@ -59,7 +84,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 		;(async () => {
 			const item = msg.getItemDetails
 			assert(item, Item)
-			const itemWithPrices = await browserAPI.getItemPrices(item)
+			const itemWithPrices = await getItemDetails(item)
 			sendResponse(itemWithPrices)
 		})()
 		return true
@@ -92,18 +117,46 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 	}
 })
 
+const addAlarm = async (deleteIfExists: boolean) => {
+	const alarmName = 'copdeckAlarm'
+	const { getSettings } = databaseCoordinator()
+	const settings = await getSettings()
+
+	return new Promise<void>((resolve, reject) => {
+		chrome.alarms.get(alarmName, (a) => {
+			if (deleteIfExists) {
+				if (a) {
+					chrome.alarms.clear(alarmName, (wasCleared) => {
+						if (wasCleared) {
+							chrome.alarms.create(alarmName, {
+								periodInMinutes: settings.updateInterval,
+							})
+						}
+						resolve()
+					})
+				} else {
+					chrome.alarms.create(alarmName, {
+						periodInMinutes: settings.updateInterval,
+					})
+					resolve()
+				}
+			} else {
+				if (!a) {
+					chrome.alarms.create(alarmName, {
+						periodInMinutes: settings.updateInterval,
+					})
+				}
+				resolve()
+			}
+		})
+	})
+}
+
 chrome.alarms.onAlarm.addListener(async () => {
 	await updatePrices()
 })
 
-chrome.runtime.onInstalled.addListener(async () => {
-	chrome.alarms.clearAll()
-	// chrome.alarms.get('copdeckAlarm', (a) => {
-	// 	if (!a) {
-	// 		chrome.alarms.create('copdeckAlarm', { periodInMinutes: 0.1 })
-	// 	}
-	// })
-})
+chrome.runtime.onInstalled.addListener(async () => {})
 
 // todo: add uninstall survey
 // chrome.runtime.onInstalled.addListener((reason) => {
@@ -112,6 +165,9 @@ chrome.runtime.onInstalled.addListener(async () => {
 // 	}
 // })
 
+// todo refine error handling
+// todo: clearr cache
+// todo: add delay between requests
 // todo: add caching
 // todo: sizes
 // todo: add timeout

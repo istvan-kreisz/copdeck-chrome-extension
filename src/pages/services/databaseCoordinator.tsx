@@ -28,6 +28,29 @@ export const databaseCoordinator = () => {
 		})
 	}
 
+	const getCachedItemWithId = async (id: string): Promise<Item | undefined> => {
+		const result = await asyncGet('cachedItems')
+		const cachedItems = result.cachedItems
+		if (is(cachedItems, array(Item))) {
+			return cachedItems.find((item) => item.id == id)
+		}
+	}
+
+	const getItemWithId = async (id: string): Promise<Item | undefined> => {
+		const result = await asyncGet('items')
+		const items = result.items
+		if (is(items, array(Item))) {
+			const item = items.find((item) => item.id == id)
+			if (item) {
+				return item
+			} else {
+				return getCachedItemWithId(id)
+			}
+		} else {
+			return getCachedItemWithId(id)
+		}
+	}
+
 	const getItems = async (): Promise<Array<Item>> => {
 		const result = await asyncGet('items')
 		const items = result.items
@@ -88,6 +111,20 @@ export const databaseCoordinator = () => {
 		await saveItems(newItems)
 	}
 
+	const cacheItem = async (item: Item) => {
+		const result = await asyncGet('cachedItems')
+		const cachedItems = result.cachedItems
+		if (is(cachedItems, array(Item))) {
+			const newItems = cachedItems.filter((i) => item.id !== i.id)
+			item.updated = new Date().getTime()
+			newItems.push(item)
+			await asyncSet('cachedItems', newItems)
+		} else {
+			item.updated = new Date().getTime()
+			await asyncSet('cachedItems', [item])
+		}
+	}
+
 	const saveItems = async (items: Item[]): Promise<void> => {
 		asyncSet('items', items)
 	}
@@ -112,6 +149,7 @@ export const databaseCoordinator = () => {
 	const saveAlert = async (alert: PriceAlert, item: Item) => {
 		const alerts = await getAlerts()
 		await asyncSet('alerts', [...alerts, alert])
+		await saveItem(item)
 	}
 
 	const saveSettings = async (settings: Settings) => {
@@ -132,6 +170,10 @@ export const databaseCoordinator = () => {
 		if (newItems.length !== items.length) {
 			saveItems(newItems)
 		}
+	}
+
+	const clearItemCache = async () => {
+		await asyncSet('cachedItems', [])
 	}
 
 	const deleteAlert = async (alert: PriceAlert) => {
@@ -158,14 +200,17 @@ export const databaseCoordinator = () => {
 	return {
 		getAlertsWithItems: getAlertsWithItems,
 		getItems: getItems,
+		getItemWithId: getItemWithId,
 		getAlerts: getAlerts,
 		getSettings: getSettings,
 		saveItem: saveItem,
+		cacheItem: cacheItem,
 		saveItems: saveItems,
 		updateItems: updateItems,
 		saveAlert: saveAlert,
 		saveSettings: saveSettings,
 		deleteAlert: deleteAlert,
+		clearItemCache: clearItemCache,
 		updateLastNotificationDateForAlert: updateLastNotificationDateForAlert,
 	}
 }
