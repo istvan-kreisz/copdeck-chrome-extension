@@ -20,9 +20,9 @@ const Popup = () => {
 			>
 				<header className="App-header"></header>
 				<main style={{ marginBottom: '2rem' }}>
-					<h3 style={{ display: activeTab === 'settings' ? 'block' : 'none' }}>
+					<div style={{ display: activeTab === 'settings' ? 'block' : 'none' }}>
 						<SettingsTab></SettingsTab>
-					</h3>
+					</div>
 					<div style={{ display: activeTab === 'main' ? 'block' : 'none' }}>
 						<MainTab></MainTab>
 					</div>

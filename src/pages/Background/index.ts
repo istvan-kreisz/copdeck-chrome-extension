@@ -195,30 +195,24 @@ const sendNotifications = async () => {
 			}
 		})
 
-	console.log(alertsFiltered)
-
 	// return promiseAllSkippingErrors(
-	alertsFiltered.forEach(([alert, item]) => {
-		const bestPrice = itemBestPrice(item, alert)
-		console.log('aaayooo')
-		console.log(alert)
-		console.log(item)
-		chrome.notifications.create(
-			uuidv4(),
-			{
-				type: 'basic',
-				iconUrl: 'http://www.google.com/favicon.ico',
-				title: 'CopDeck Price Alert!',
-				message: `${item.name} price dropped below ${alert.targetPrice}! Current best price: ${settings.currency}${bestPrice}`,
-				priority: 2,
-			},
-			() => {
-				console.log('sosdsdsds')
-				console.log('Last error:', chrome.runtime.lastError)
-			}
-		)
-		// return updateLastNotificationDateForAlert(alert)
-	})
+	// 	alertsFiltered.map(([alert, item]) => {
+	// 		const bestPrice = itemBestPrice(item, alert)
+	// 		chrome.notifications.create(
+	// 			uuidv4(),
+	// 			{
+	// 				type: 'basic',
+	// 				iconUrl: 'http://www.google.com/favicon.ico',
+	// 				title: 'CopDeck Price Alert!',
+	// 				message: `${item.name} price dropped below ${alert.targetPrice}! Current best price: ${settings.currency}${bestPrice}`,
+	// 				priority: 2,
+	// 			},
+	// 			() => {
+	// 				console.log('Last error:', chrome.runtime.lastError)
+	// 			}
+	// 		)
+	// 		return updateLastNotificationDateForAlert(alert)
+	// 	})
 	// )
 }
 

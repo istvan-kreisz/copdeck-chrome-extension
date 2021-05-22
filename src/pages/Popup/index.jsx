@@ -1,5 +1,6 @@
 import React from 'react'
 import { render } from 'react-dom'
+import 'tailwindcss/tailwind.css'
 
 import Popup from './Popup'
 import './index.css'

@@ -4,6 +4,7 @@ import { assert, array, is, union, literal } from 'superstruct'
 import { Item } from 'copdeck-scraper/dist/types'
 import { databaseCoordinator } from '../../services/databaseCoordinator'
 import { Settings } from '../../utils/types'
+import 'tailwindcss/tailwind.css'
 
 const SettingsTab = () => {
 	const currencies = ['EUR', 'US']
@@ -70,7 +71,7 @@ const SettingsTab = () => {
 
 	return (
 		<div>
-			<h1>yo im settings</h1>
+			<h1 className="text-xl text-red-400">yo im settings</h1>
 			<form onSubmit={saveSettings} style={{ display: 'flex', flexDirection: 'column' }}>
 				<div style={{ display: 'flex', flexDirection: 'column' }} ref={currencySelector}>
 					<>
