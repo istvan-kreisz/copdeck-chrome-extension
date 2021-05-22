@@ -12,6 +12,10 @@ const Popup = () => {
 		setActiveTab(tab)
 	}
 
+	const clickedLink = () => {
+		chrome.tabs.create({ url: 'https://copdeck.com' })
+	}
+
 	return (
 		<div className="gap-0 grid grid-row-3 absolute top-0 left-0 right-0 bottom-0 text-left">
 			<main className="bg-transparent h-96">
@@ -59,7 +63,8 @@ const Popup = () => {
 			</section>
 			<footer className="h-8 w-full bg-theme-yellow flex-grow-0">
 				<a
-					className="w-full h-full flex space-x-1 flex-row align-middle items-center justify-center "
+					onClick={clickedLink}
+					className="w-full h-full flex space-x-1 flex-row align-middle items-center justify-center"
 					href="https://copdeck.com"
 				>
 					<DeviceMobileIcon
