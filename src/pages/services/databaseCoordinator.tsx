@@ -9,12 +9,13 @@ export const databaseCoordinator = () => {
 	const defaultSettings: Settings = {
 		currency: 'EUR',
 		updateInterval: 10,
+		notificationFrequency: 3,
 		proxies: undefined,
 	}
 
 	const asyncSet = async (key: string, value: object): Promise<void> => {
 		return new Promise((resolve, reject) => {
-			chrome.storage.sync.set({ [key]: value }, () => {
+			chrome.storage.local.set({ [key]: value }, () => {
 				resolve()
 			})
 		})
@@ -22,7 +23,7 @@ export const databaseCoordinator = () => {
 
 	const asyncGet = async (key: string): Promise<any> => {
 		return new Promise((resolve, reject) => {
-			chrome.storage.sync.get([key], (result) => {
+			chrome.storage.local.get([key], (result) => {
 				resolve(result)
 			})
 		})
@@ -109,6 +110,8 @@ export const databaseCoordinator = () => {
 		item.updated = new Date().getTime()
 		newItems.push(item)
 		await saveItems(newItems)
+		console.log('saved items')
+		console.log(newItems)
 	}
 
 	const cacheItem = async (item: Item) => {
@@ -147,9 +150,11 @@ export const databaseCoordinator = () => {
 	}
 
 	const saveAlert = async (alert: PriceAlert, item: Item) => {
+		console.log('saaave')
 		const alerts = await getAlerts()
 		await asyncSet('alerts', [...alerts, alert])
 		await saveItem(item)
+		console.log(item)
 	}
 
 	const saveSettings = async (settings: Settings) => {

@@ -4,6 +4,7 @@ const SettingsSchema = {
 	proxies: optional(string()),
 	currency: union([literal('EUR'), literal('US')]),
 	updateInterval: number(),
+	notificationFrequency: number(),
 }
 
 const Settings = object(SettingsSchema)

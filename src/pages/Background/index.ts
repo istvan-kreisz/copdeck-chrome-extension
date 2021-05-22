@@ -1,9 +1,16 @@
-import { browserAPI, promiseAllSkippingErrors, notEmpty } from 'copdeck-scraper'
+import {
+	browserAPI,
+	promiseAllSkippingErrors,
+	isOlderThan,
+	itemBestPrice,
+	itemImageURL,
+} from 'copdeck-scraper'
 import { assert, string, number, array } from 'superstruct'
 import { Item, PriceAlert } from 'copdeck-scraper/dist/types'
 import { databaseCoordinator } from '../services/databaseCoordinator'
 import { Settings } from '../utils/types'
 import { parse, stringify } from '../utils/proxyparser'
+import { v4 as uuidv4 } from 'uuid'
 
 const minUpdateInterval = 1
 const maxUpdateInterval = 1440
@@ -28,8 +35,7 @@ const updatePrices = async () => {
 		activeItems.map((item) => {
 			const lastUpdated = item.updated
 			if (
-				(lastUpdated &&
-					lastUpdated < new Date().getTime() - 60 * 1000 * settings.updateInterval) ||
+				(lastUpdated && isOlderThan(lastUpdated, settings.updateInterval, 'minutes')) ||
 				!lastUpdated
 			) {
 				return browserAPI.getItemPrices(item)
@@ -42,6 +48,8 @@ const updatePrices = async () => {
 	const items = result.filter((item) => item.storePrices && item.storePrices.length)
 	if (items && items.length) {
 		await updateItems(items)
+		console.log('updated items')
+		console.log(items)
 	}
 }
 
@@ -152,11 +160,88 @@ const addAlarm = async (deleteIfExists: boolean) => {
 	})
 }
 
+const sendNotifications = async () => {
+	const { getSettings, updateLastNotificationDateForAlert } = databaseCoordinator()
+	const settings = await getSettings()
+
+	const { getAlertsWithItems } = databaseCoordinator()
+	const alerts = await getAlertsWithItems()
+	console.log(alerts)
+	const alertsFiltered = alerts
+		.filter(([alert, item]) => {
+			// todo
+			return true
+			// if (alert.lastNotificationSent) {
+			// 	return isOlderThan(
+			// 		alert.lastNotificationSent,
+			// 		settings.notificationFrequency,
+			// 		'hours'
+			// 	)
+			// } else {
+			// 	return true
+			// }
+		})
+		.filter(([alert, item]) => {
+			const bestPrice = itemBestPrice(item, alert)
+			console.log(bestPrice, alert.targetPrice)
+			if (bestPrice) {
+				if (bestPrice < alert.targetPrice) {
+					return true
+				} else {
+					return false
+				}
+			} else {
+				return false
+			}
+		})
+
+	console.log(alertsFiltered)
+
+	// return promiseAllSkippingErrors(
+	alertsFiltered.forEach(([alert, item]) => {
+		const bestPrice = itemBestPrice(item, alert)
+		console.log('aaayooo')
+		console.log(alert)
+		console.log(item)
+		chrome.notifications.create(
+			uuidv4(),
+			{
+				type: 'basic',
+				iconUrl: 'http://www.google.com/favicon.ico',
+				title: 'CopDeck Price Alert!',
+				message: `${item.name} price dropped below ${alert.targetPrice}! Current best price: ${settings.currency}${bestPrice}`,
+				priority: 2,
+			},
+			() => {
+				console.log('sosdsdsds')
+				console.log('Last error:', chrome.runtime.lastError)
+			}
+		)
+		// return updateLastNotificationDateForAlert(alert)
+	})
+	// )
+}
+
 chrome.alarms.onAlarm.addListener(async () => {
 	await updatePrices()
+	await sendNotifications()
 })
 
-chrome.runtime.onInstalled.addListener(async () => {})
+chrome.runtime.onInstalled.addListener(async () => {
+	// await addAlarm(false)
+
+	await updatePrices()
+	await sendNotifications()
+
+	chrome.storage.onChanged.addListener(function (changes, namespace) {
+		for (let [key, { oldValue, newValue }] of Object.entries(changes)) {
+			console.log(
+				`Storage key "${key}" in namespace "${namespace}" changed.`,
+				`Old value was "${oldValue}", new value is "${newValue}".`
+			)
+		}
+	})
+})
 
 // todo: add uninstall survey
 // chrome.runtime.onInstalled.addListener((reason) => {
@@ -165,6 +250,10 @@ chrome.runtime.onInstalled.addListener(async () => {})
 // 	}
 // })
 
+// add check for duplicate alerts
+// todo: alert added confirmation
+// todo: QUOTA_BYTES_PER_ITEM
+// todo: reset alarm when fetch interval changed
 // todo refine error handling
 // todo: clearr cache
 // todo: add delay between requests

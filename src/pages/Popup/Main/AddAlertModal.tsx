@@ -81,10 +81,14 @@ const AddAlertModal = (prop: {
 	}
 
 	const addAlert = (event: React.FormEvent<HTMLFormElement>) => {
+		console.log('sdsd')
 		event.preventDefault()
 		const price = parseFloat(priceField.current?.value ?? '')
 		// todo: better error handling
-		if (!price || !selectedSize || selectedStores.length === 0 || !prop.selectedItem) return
+		console.log(price)
+		console.log(selectedSize)
+		console.log(selectedStores)
+		if (!price || !selectedSize || !selectedStores.length || !prop.selectedItem) return
 		const newAlert: PriceAlert = {
 			name: `${price} - ${selectedSize} (${selectedStores
 				.map((store) => storeName(store.store))
@@ -95,7 +99,14 @@ const AddAlertModal = (prop: {
 			targetSize: selectedSize,
 			stores: selectedStores.map((store) => store.store),
 		}
+		console.log('yo')
 		saveAlert(newAlert, prop.selectedItem)
+			.then((result) => {
+				console.log(result)
+			})
+			.catch((err) => {
+				console.log(err)
+			})
 	}
 
 	return (
