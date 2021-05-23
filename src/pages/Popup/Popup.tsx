@@ -18,7 +18,7 @@ const Popup = () => {
 
 	return (
 		<div className="gap-0 grid grid-row-3 absolute top-0 left-0 right-0 bottom-0 text-left">
-			<main className="bg-transparent relative h-96">
+			<main className="bg-transparent relative w-full h-96">
 				<div className={`h-full ${activeTab === 'settings' ? 'block' : 'hidden'}`}>
 					<SettingsTab></SettingsTab>
 				</div>
