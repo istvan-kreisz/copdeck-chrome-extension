@@ -4,9 +4,11 @@ import { assert, array } from 'superstruct'
 import { Item, PriceAlert } from 'copdeck-scraper/dist/types'
 import { itemImageURL, itemBestPrice } from 'copdeck-scraper'
 import ItemDetail from '../../Components/ItemDetail'
+import AlertListItem from './AlertListItem'
 import { databaseCoordinator } from '../../services/databaseCoordinator'
+import { Currency } from '../../utils/types'
 
-const AlertsTab = (prop: { activeTab: 'main' | 'settings' | 'alerts' }) => {
+const AlertsTab = (prop: { activeTab: 'main' | 'settings' | 'alerts'; currency: Currency }) => {
 	const [priceAlerts, setPriceAlerts] = useState<[PriceAlert, Item][]>([])
 	const [selectedItem, setSelectedItem] = useState<Item | null>()
 
@@ -27,52 +29,50 @@ const AlertsTab = (prop: { activeTab: 'main' | 'settings' | 'alerts' }) => {
 		}
 	}
 
+	const deletedAlert = (alert: PriceAlert, event) => {
+		event.stopPropagation()
+		;(async () => {
+			await deleteAlert(alert)
+			const alertsWithItems = await getAlertsWithItems()
+			setPriceAlerts(alertsWithItems)
+		})()
+	}
+
 	return (
-		<div>
-			<h1>alerts</h1>
-			<ul className="searchResults">
-				{priceAlerts.map(([alert, item], index) => {
-					return (
-						<li
-							onClick={clickedItem.bind(null, item)}
-							style={{
-								listStyle: 'none',
-								display: 'flex',
-								flexDirection: 'row',
-								justifyItems: 'center',
-								alignItems: 'center',
-								flexWrap: 'nowrap',
-							}}
-							className="searchResult"
-							key={alert.id}
-						>
-							<img
-								style={{ height: '40px', width: '40px' }}
-								src={itemImageURL(item)}
-								alt=""
-							/>
-							<div
-								style={{
-									display: 'flex',
-									flexDirection: 'column',
-								}}
-							>
-								<p>{item.name}</p>
-								<p>{alert.targetSize}</p>
-								<p>{alert.targetPrice}</p>
-							</div>
-							<h2>{`${itemBestPrice(item, alert)}`}</h2>
-						</li>
-					)
-				})}
-			</ul>
+		<>
+			<div className="p-3">
+				<h1 className="font-bold mb-4">Price Alerts</h1>
+				<ul className="searchResults">
+					{priceAlerts.map(([alert, item], index) => {
+						return (
+							<AlertListItem
+								name={item.name}
+								imageURL={itemImageURL(item)}
+								id={alert.id}
+								onClicked={clickedItem.bind(null, item)}
+								bestPrice={prop.currency.symbol + itemBestPrice(item, alert)}
+								targetSize={alert.targetSize}
+								targetPrice={prop.currency.symbol + alert.targetPrice}
+								onDeleted={deletedAlert.bind(null, alert)}
+							></AlertListItem>
+						)
+					})}
+				</ul>
+				{!priceAlerts.length ? (
+					<>
+						<p className="text-center">No alerts added yet.</p>
+						<p className="text-center">Use the search tab to set price alerts.</p>
+					</>
+				) : null}
+			</div>
 			{selectedItem ? (
 				<ItemDetail
+					currency={prop.currency}
 					selectedItem={selectedItem}
 					setSelectedItem={setSelectedItem}
 				></ItemDetail>
 			) : null}
-		</div>
+		</>
 	)
 }
 

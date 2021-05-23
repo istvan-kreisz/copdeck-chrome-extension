@@ -1,14 +1,16 @@
-import React, { StrictMode } from 'react'
+import React from 'react'
 import { useEffect, useState, useRef } from 'react'
 import { assert } from 'superstruct'
-import { Item, StorePrices, Store } from 'copdeck-scraper/dist/types'
-import { itemImageURL, itemBestPrice, bestStoreInfo } from 'copdeck-scraper'
+import { Item, Store } from 'copdeck-scraper/dist/types'
+import { itemImageURL, bestStoreInfo } from 'copdeck-scraper'
 import AddAlertModal from '../Popup/Main/AddAlertModal'
 import { ChevronLeftIcon } from '@heroicons/react/outline'
+import { Currency } from '../utils/types'
 
 const ItemDetail = (prop: {
 	selectedItem: Item
 	setSelectedItem: (callback: (item: Item | null | undefined) => Item | null | undefined) => void
+	currency: Currency
 }) => {
 	const [showAddPriceAlertModal, setShowAddPriceAlertModal] = useState(false)
 	const [priceType, setPriceType] = useState<'ask' | 'bid'>('ask')
@@ -56,7 +58,7 @@ const ItemDetail = (prop: {
 			?.inventory.find((inventoryItem) => inventoryItem.size === size)
 		let price = priceType === 'ask' ? prices?.lowestAsk : prices?.highestBid
 		if (price) {
-			return (prices?.currency === 'EUR' ? '€' : '$') + price
+			return prop.currency.symbol + price
 		} else {
 			return '-'
 		}
@@ -66,6 +68,13 @@ const ItemDetail = (prop: {
 		const stockxPrice = price(size, 'stockx')
 		const klektPrice = price(size, 'klekt')
 		return { stockx: stockxPrice, klekt: klektPrice }
+	}
+
+	const priceClicked = (store: Store) => {
+		const storeInfo = prop.selectedItem.storeInfo.find((s) => s.store === store)
+		if (storeInfo) {
+			chrome.tabs.create({ url: `https://${storeInfo.store}.com/product/${storeInfo.slug}` })
+		}
 	}
 
 	// todo: check retail price
@@ -156,7 +165,8 @@ const ItemDetail = (prop: {
 											{row.size}
 										</p>
 										<p
-											className={`h-7 rounded-full flex justify-center items-center w-16 ${
+											onClick={priceClicked.bind(null, 'stockx')}
+											className={`h-7 rounded-full cursor-pointer flex justify-center items-center w-16 ${
 												row.prices.stockx &&
 												(row.prices.stockx ?? 0) > (row.prices.klekt ?? 0)
 													? 'border-2 border-green-500'
@@ -166,7 +176,8 @@ const ItemDetail = (prop: {
 											{row.prices.stockx}
 										</p>
 										<p
-											className={`h-7 rounded-full flex justify-center items-center w-16 ${
+											onClick={priceClicked.bind(null, 'klekt')}
+											className={`h-7 rounded-full cursor-pointer flex justify-center items-center w-16 ${
 												row.prices.klekt &&
 												(row.prices.klekt ?? 0) > (row.prices.stockx ?? 0)
 													? 'border-2 border-green-500'

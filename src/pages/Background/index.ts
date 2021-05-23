@@ -244,6 +244,7 @@ chrome.runtime.onInstalled.addListener(async () => {
 // 	}
 // })
 
+// todo: figure out currecy, size updates
 // add check for duplicate alerts
 // todo: image caching
 // todo: add refresh button

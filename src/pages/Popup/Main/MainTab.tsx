@@ -7,21 +7,22 @@ import ItemDetail from '../../Components/ItemDetail'
 import LoadingIndicator from '../../Components/LoadingIndicator'
 import MainListItem from './MainListItem'
 import { databaseCoordinator } from '../../services/databaseCoordinator'
+import { Settings, Currency } from '../../utils/types'
 
-const MainTab = () => {
+const MainTab = (prop: { currency: Currency }) => {
 	const [searchState, setSearchState] = useState<Item[] | null | 'searching'>(null)
 	const [selectedItem, setSelectedItem] = useState<Item | null>()
 
 	const searchBar = useRef<HTMLInputElement>(null)
 
 	// todo: delete
-	const { getItems } = databaseCoordinator()
-	useEffect(() => {
-		;(async () => {
-			const items = await getItems()
-			setSelectedItem(items[0])
-		})()
-	}, [])
+	// const { getItems } = databaseCoordinator()
+	// useEffect(() => {
+	// 	;(async () => {
+	// 		const items = await getItems()
+	// 		setSelectedItem(items[0])
+	// 	})()
+	// }, [])
 
 	const search = () => {
 		setSearchState('searching')
@@ -96,6 +97,7 @@ const MainTab = () => {
 			</div>
 			{selectedItem ? (
 				<ItemDetail
+					currency={prop.currency}
 					selectedItem={selectedItem}
 					setSelectedItem={setSelectedItem}
 				></ItemDetail>

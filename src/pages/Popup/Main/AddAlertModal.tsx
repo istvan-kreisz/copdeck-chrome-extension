@@ -3,6 +3,9 @@ import { useRef, useState } from 'react'
 import { Item, Store, StorePrices, PriceAlert } from 'copdeck-scraper/dist/types'
 import { v4 as uuidv4 } from 'uuid'
 import { databaseCoordinator } from '../../services/databaseCoordinator'
+import { itemImageURL, bestStoreInfo } from 'copdeck-scraper'
+import { ChevronLeftIcon } from '@heroicons/react/outline'
+import Popup from '../../Components/Popup'
 
 const AddAlertModal = (prop: {
 	selectedItem: Item
@@ -11,6 +14,8 @@ const AddAlertModal = (prop: {
 }) => {
 	const [selectedStores, setSelectedStores] = useState<StorePrices[]>([])
 	const [selectedSize, setSelectedSize] = useState<string>()
+
+	const [showConfirmationModal, setShowConfirmationModal] = useState(false)
 
 	const storeSelector = useRef<HTMLDivElement>(null)
 	const priceField = useRef<HTMLInputElement>(null)
@@ -110,58 +115,52 @@ const AddAlertModal = (prop: {
 	}
 
 	return (
-		<div
-			style={{
-				position: 'fixed',
-				left: 0,
-				right: 0,
-				bottom: 0,
-				top: 0,
-				display: 'flex',
-				flexDirection: 'column',
-				backgroundColor: 'green',
-				justifyItems: 'center',
-				padding: '1rem',
-				overflow: 'scroll',
-			}}
-		>
-			<button onClick={prop.setShowAddPriceAlertModal.bind(null, false)}> Back</button>
-			<h3>Add price alert</h3>
-			<form onSubmit={addAlert} style={{ display: 'flex', flexDirection: 'column' }}>
-				<label>Select Store:</label>
-				<div style={{ display: 'flex', flexDirection: 'column' }} ref={storeSelector}>
-					{selectableStores().map((store) => {
-						return (
-							<div style={{ display: 'flex', flexDirection: 'row' }}>
-								<label htmlFor={store.store}>{storeLabel(store)}</label>
-								<input
-									type="checkbox"
-									id={store.store}
-									name={store.store}
-									value={store.store}
-									onChange={storeToggled}
-								/>
-							</div>
-						)
-					})}
-				</div>
-				<select onChange={sizeSelected} name="size" id="size">
-					{selectableSizes().map((size) => {
-						return <option value={size}>{size}</option>
-					})}
-				</select>
-				<label htmlFor="pricefield">Target Price:</label>
-				<input
-					ref={priceField}
-					type="number"
-					name="pricefield"
-					id="pricefield"
-					step={1}
-					min={0}
-				/>
-				<input type="submit" value="Add price alert" />
-			</form>
-		</div>
+		<>
+			<div className="fixed inset-0 flex flex-col overflow-y-scroll">
+				<button onClick={prop.setShowAddPriceAlertModal.bind(null, false)}> Back</button>
+				<h3>Add price alert</h3>
+				<form onSubmit={addAlert} style={{ display: 'flex', flexDirection: 'column' }}>
+					<label>Select Store:</label>
+					<div style={{ display: 'flex', flexDirection: 'column' }} ref={storeSelector}>
+						{selectableStores().map((store) => {
+							return (
+								<div style={{ display: 'flex', flexDirection: 'row' }}>
+									<label htmlFor={store.store}>{storeLabel(store)}</label>
+									<input
+										type="checkbox"
+										id={store.store}
+										name={store.store}
+										value={store.store}
+										onChange={storeToggled}
+									/>
+								</div>
+							)
+						})}
+					</div>
+					<select onChange={sizeSelected} name="size" id="size">
+						{selectableSizes().map((size) => {
+							return <option value={size}>{size}</option>
+						})}
+					</select>
+					<label htmlFor="pricefield">Target Price:</label>
+					<input
+						ref={priceField}
+						type="number"
+						name="pricefield"
+						id="pricefield"
+						step={1}
+						min={0}
+					/>
+					<input type="submit" value="Add price alert" />
+				</form>
+			</div>
+			<Popup
+				title="Price alert added!"
+				message="bblah bblah bblah bblah bblah bblah bblah bblah"
+				open={true}
+				close={setShowConfirmationModal}
+			></Popup>
+		</>
 	)
 }
 

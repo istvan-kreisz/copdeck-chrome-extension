@@ -2,11 +2,32 @@ import React from 'react'
 import MainTab from './Main/MainTab'
 import SettingsTab from './Settings/SettingsTab'
 import AlertsTab from './Alerts/AlertsTab'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { Currency, Settings } from '../utils/types'
+import { assert, array, is, union, literal } from 'superstruct'
 import { SearchIcon, CogIcon, BellIcon, DeviceMobileIcon } from '@heroicons/react/outline'
 
 const Popup = () => {
-	const [activeTab, setActiveTab] = useState<'main' | 'settings' | 'alerts'>('main')
+	// todo: set to main
+	const [activeTab, setActiveTab] = useState<'main' | 'settings' | 'alerts'>('alerts')
+	const [currency, setCurrency] = useState<Currency>({ code: 'EUR', symbol: '€' })
+
+	useEffect(() => {
+		chrome.storage.onChanged.addListener(function (changes, namespace) {
+			const settings = changes.settings?.newValue
+			if (settings) {
+				assert(settings, Settings)
+				setCurrency(
+					settings.currency === 'EUR'
+						? {
+								code: settings.currency,
+								symbol: '€',
+						  }
+						: { code: settings.currency, symbol: '$' }
+				)
+			}
+		})
+	}, [])
 
 	const selectedTab = (tab: 'main' | 'settings' | 'alerts') => {
 		setActiveTab(tab)
@@ -23,10 +44,10 @@ const Popup = () => {
 					<SettingsTab></SettingsTab>
 				</div>
 				<div className={`h-full ${activeTab === 'main' ? 'block' : 'hidden'}`}>
-					<MainTab></MainTab>
+					<MainTab currency={currency}></MainTab>
 				</div>
 				<div className={`h-full ${activeTab === 'alerts' ? 'block' : 'hidden'}`}>
-					<AlertsTab activeTab={activeTab}></AlertsTab>
+					<AlertsTab currency={currency} activeTab={activeTab}></AlertsTab>
 				</div>
 			</main>
 			<section className="bg-white w-full flex h-12 border-gray-400 shadow-xl">
