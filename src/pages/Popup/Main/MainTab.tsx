@@ -43,11 +43,11 @@ const MainTab = () => {
 	}
 
 	return (
-		<div className="bg-transparent p-3 pb-0 relative h-full overflow-y-scroll">
-			<div className="flex flex-row flex-nowrap w-full space-x-2">
+		<div className="bg-transparent p-3 pb-0 relative w-full h-full overflow-y-scroll overflow-x-hidden">
+			<div className="flex flex-row flex-nowrap w-full max-w-full space-x-2">
 				<input
 					placeholder="Search sneakers"
-					className="h-10 flex-grow rounded-lg focus:outline-none shadow-md px-3 text-md"
+					className="h-10 flex-grow rounded-lg focus:outline-none shadow-md text-md border-none m-0"
 					ref={searchBar}
 					type="text"
 					onKeyDown={handleKeyDown}
