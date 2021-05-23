@@ -18,6 +18,8 @@ const AlertsTab = (prop: { activeTab: 'main' | 'settings' | 'alerts'; currency: 
 		if (prop.activeTab === 'alerts') {
 			;(async () => {
 				const alertsWithItems = await getAlertsWithItems()
+				console.log(alertsWithItems[0][1])
+				console.log(alertsWithItems[0][0])
 				setPriceAlerts(alertsWithItems)
 			})()
 		}
@@ -40,9 +42,9 @@ const AlertsTab = (prop: { activeTab: 'main' | 'settings' | 'alerts'; currency: 
 
 	return (
 		<>
-			<div className="p-3">
+			<div className="bg-transparent p-3 pb-0 relative w-full h-full overflow-y-scroll overflow-x-hidden">
 				<h1 className="font-bold mb-4">Price Alerts</h1>
-				<ul className="searchResults">
+				<ul className="my-4 flex flex-col space-y-3">
 					{priceAlerts.map(([alert, item], index) => {
 						return (
 							<AlertListItem
@@ -50,9 +52,10 @@ const AlertsTab = (prop: { activeTab: 'main' | 'settings' | 'alerts'; currency: 
 								imageURL={itemImageURL(item)}
 								id={alert.id}
 								onClicked={clickedItem.bind(null, item)}
-								bestPrice={prop.currency.symbol + itemBestPrice(item, alert)}
+								bestPrice={itemBestPrice(item, alert)}
+								currency={prop.currency.symbol}
 								targetSize={alert.targetSize}
-								targetPrice={prop.currency.symbol + alert.targetPrice}
+								targetPrice={alert.targetPrice}
 								onDeleted={deletedAlert.bind(null, alert)}
 							></AlertListItem>
 						)

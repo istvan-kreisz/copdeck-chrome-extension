@@ -9,7 +9,7 @@ import { SearchIcon, CogIcon, BellIcon, DeviceMobileIcon } from '@heroicons/reac
 
 const Popup = () => {
 	// todo: set to main
-	const [activeTab, setActiveTab] = useState<'main' | 'settings' | 'alerts'>('alerts')
+	const [activeTab, setActiveTab] = useState<'main' | 'settings' | 'alerts'>('main')
 	const [currency, setCurrency] = useState<Currency>({ code: 'EUR', symbol: '€' })
 
 	useEffect(() => {

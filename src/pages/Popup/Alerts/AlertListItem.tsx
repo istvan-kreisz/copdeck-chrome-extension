@@ -8,6 +8,7 @@ const AlertListItem = ({
 	name,
 	onClicked,
 	bestPrice,
+	currency,
 	targetSize,
 	targetPrice,
 	onDeleted,
@@ -27,7 +28,7 @@ const AlertListItem = ({
 					<p
 						className={`h-5 flex items-center flex-shrink-0 px-2 flex-grow-0 rounded-full bg-theme-orange text-white`}
 					>
-						{`${targetPrice}`}
+						{currency + targetPrice}
 					</p>
 				</div>
 			</div>
@@ -39,10 +40,18 @@ const AlertListItem = ({
 				<TrashIcon className="font-bold h-5 text-white flex-shrink-0"></TrashIcon>
 			</button>
 
-			<div className="flex-shrink-0 flex flex-col justify-center items-center">
-				<p className="m-0">Best:</p>
-				<p className=" text-gray-800 font-medium text-base">{bestPrice}</p>
-			</div>
+			{bestPrice ? (
+				<div className="flex-shrink-0 flex flex-col justify-center items-center">
+					<p className="m-0">Best:</p>
+					<p
+						className={`text-gray-800 font-medium text-base ${
+							(bestPrice ?? 99999) < targetPrice ? 'text-green-500' : 'text-red-500'
+						}`}
+					>
+						{currency + bestPrice}
+					</p>
+				</div>
+			) : null}
 
 			<ChevronRightIcon className="h-6 text-gray-400 flex-shrink-0"></ChevronRightIcon>
 		</ListItem>

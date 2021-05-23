@@ -71,7 +71,7 @@ const MainTab = (prop: { currency: Currency }) => {
 						Search
 					</button>
 				</div>
-				<ul className="searchState my-4 flex flex-col space-y-3 ">
+				<ul className="my-4 flex flex-col space-y-3">
 					{searchState === 'searching' ? <LoadingIndicator></LoadingIndicator> : null}
 					{typeof searchState === 'object' &&
 					searchState &&

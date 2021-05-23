@@ -154,12 +154,12 @@ const AddAlertModal = (prop: {
 					<input type="submit" value="Add price alert" />
 				</form>
 			</div>
-			<Popup
+			{/* <Popup
 				title="Price alert added!"
 				message="bblah bblah bblah bblah bblah bblah bblah bblah"
 				open={true}
 				close={setShowConfirmationModal}
-			></Popup>
+			></Popup> */}
 		</>
 	)
 }
