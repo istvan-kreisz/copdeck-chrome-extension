@@ -245,6 +245,7 @@ chrome.runtime.onInstalled.addListener(async () => {
 // })
 
 // add check for duplicate alerts
+// todo: add refresh button
 // todo: alert added confirmation
 // todo: QUOTA_BYTES_PER_ITEM
 // todo: reset alarm when fetch interval changed

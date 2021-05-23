@@ -31,6 +31,12 @@ body {
 
 	input,
 	textarea {
-		@apply text-gray-700;
+		@apply text-gray-700 leading-relaxed tracking-wider;
+	}
+}
+
+@layer components {
+	.button-default {
+		@apply flex cursor-pointer items-center justify-center px-4 py-1 border-transparent text-base font-medium rounded-lg text-white bg-theme-orange hover:bg-theme-orange-dark outline-none ring-0 focus:outline-none;
 	}
 }

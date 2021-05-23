@@ -18,47 +18,77 @@ const Popup = () => {
 
 	return (
 		<div className="gap-0 grid grid-row-3 absolute top-0 left-0 right-0 bottom-0 text-left">
-			<main className="bg-transparent h-96">
-				<div style={{ display: activeTab === 'settings' ? 'block' : 'none' }}>
+			<main className="bg-transparent relative h-96">
+				<div className={`h-full ${activeTab === 'settings' ? 'block' : 'hidden'}`}>
 					<SettingsTab></SettingsTab>
 				</div>
-				<div style={{ display: activeTab === 'main' ? 'block' : 'none' }}>
+				<div className={`h-full ${activeTab === 'main' ? 'block' : 'hidden'}`}>
 					<MainTab></MainTab>
 				</div>
-				<div style={{ display: activeTab === 'alerts' ? 'block' : 'none' }}>
+				<div className={`h-full ${activeTab === 'alerts' ? 'block' : 'hidden'}`}>
 					<AlertsTab activeTab={activeTab}></AlertsTab>
 				</div>
 			</main>
-			<section className="bg-theme-orange w-full flex h-12">
+			<section className="bg-white w-full flex h-12 border-gray-400 shadow-xl">
 				<button
-					className="outline-none focus:outline-none flex-1"
+					className={`outline-none group focus:outline-none flex-1 ${
+						activeTab === 'settings' ? 'bg-gray-200 shadow-xl' : ''
+					}`}
 					onClick={selectedTab.bind(null, 'settings')}
 				>
 					<CogIcon
-						className="mx-auto text-center h-6 w-6 text-white"
+						className={`mx-auto text-center h-6 w-6 ${
+							activeTab === 'settings' ? 'text-gray-800' : 'text-gray-500'
+						}`}
 						aria-hidden="true"
 					></CogIcon>
-					<p className="text-xs font-medium text-white">Settings</p>
+					<p
+						className={`text-xs font-medium ${
+							activeTab === 'settings' ? 'text-gray-800' : 'text-gray-500'
+						}`}
+					>
+						Settings
+					</p>
 				</button>
 				<button
-					className="outline-none focus:outline-none flex-1"
+					className={`outline-none group focus:outline-none flex-1 ${
+						activeTab === 'main' ? 'bg-gray-200 shadow-xl' : ''
+					}`}
 					onClick={selectedTab.bind(null, 'main')}
 				>
 					<SearchIcon
-						className="mx-auto text-center h-6 w-6 text-white"
+						className={`mx-auto text-center h-6 w-6 ${
+							activeTab === 'main' ? 'text-gray-800' : 'text-gray-500'
+						}`}
 						aria-hidden="true"
 					></SearchIcon>
-					<p className="text-xs font-medium text-white">Search</p>
+					<p
+						className={`text-xs font-medium ${
+							activeTab === 'main' ? 'text-gray-800' : 'text-gray-500'
+						}`}
+					>
+						Search
+					</p>
 				</button>
 				<button
-					className="outline-none focus:outline-none flex-1"
+					className={`outline-none group focus:outline-none flex-1 ${
+						activeTab === 'alerts' ? 'bg-gray-200 shadow-xl' : ''
+					}`}
 					onClick={selectedTab.bind(null, 'alerts')}
 				>
 					<BellIcon
-						className="mx-auto text-center h-6 w-6 text-white"
+						className={`mx-auto text-center h-6 w-6 ${
+							activeTab === 'alerts' ? 'text-gray-800' : 'text-gray-500'
+						}`}
 						aria-hidden="true"
 					></BellIcon>
-					<p className="text-xs font-medium text-white">Alerts</p>
+					<p
+						className={`text-xs font-medium ${
+							activeTab === 'alerts' ? 'text-gray-800' : 'text-gray-500'
+						}`}
+					>
+						Alerts
+					</p>
 				</button>
 			</section>
 			<footer className="h-8 w-full bg-theme-yellow flex-grow-0">

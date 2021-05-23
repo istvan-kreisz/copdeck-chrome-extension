@@ -3,7 +3,7 @@ import { useEffect, useState, useRef } from 'react'
 import { assert } from 'superstruct'
 import { Item } from 'copdeck-scraper/dist/types'
 import { itemImageURL, itemBestPrice } from 'copdeck-scraper'
-import AddAlertModal from './Main/AddAlertModal'
+import AddAlertModal from '../Popup/Main/AddAlertModal'
 
 const ItemDetail = (prop: {
 	selectedItem: Item

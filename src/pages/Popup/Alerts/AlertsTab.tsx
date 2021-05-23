@@ -3,7 +3,7 @@ import { useState, useRef, useEffect } from 'react'
 import { assert, array } from 'superstruct'
 import { Item, PriceAlert } from 'copdeck-scraper/dist/types'
 import { itemImageURL, itemBestPrice } from 'copdeck-scraper'
-import ItemDetail from '../ItemDetail'
+import ItemDetail from '../../Components/ItemDetail'
 import { databaseCoordinator } from '../../services/databaseCoordinator'
 
 const AlertsTab = (prop: { activeTab: 'main' | 'settings' | 'alerts' }) => {
