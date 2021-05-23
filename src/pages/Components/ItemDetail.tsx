@@ -1,7 +1,7 @@
 import React from 'react'
 import { useEffect, useState, useRef } from 'react'
 import { assert } from 'superstruct'
-import { Item, Store } from 'copdeck-scraper/dist/types'
+import { Item, Store, STOCKX, KLEKT } from 'copdeck-scraper/dist/types'
 import { itemImageURL, bestStoreInfo } from 'copdeck-scraper'
 import AddAlertModal from '../Popup/Main/AddAlertModal'
 import { ChevronLeftIcon } from '@heroicons/react/outline'
@@ -12,6 +12,7 @@ const ItemDetail = (prop: {
 	setSelectedItem: (callback: (item: Item | null | undefined) => Item | null | undefined) => void
 	currency: Currency
 }) => {
+	// todo
 	const [showAddPriceAlertModal, setShowAddPriceAlertModal] = useState(false)
 	const [priceType, setPriceType] = useState<'ask' | 'bid'>('ask')
 	const didClickBack = useRef(false)
@@ -54,7 +55,7 @@ const ItemDetail = (prop: {
 
 	const price = (size: string, store: Store): string => {
 		const prices = allStores
-			.find((s) => s.store === store)
+			.find((s) => s.store.id === store.id)
 			?.inventory.find((inventoryItem) => inventoryItem.size === size)
 		let price = priceType === 'ask' ? prices?.lowestAsk : prices?.highestBid
 		if (price) {
@@ -65,8 +66,8 @@ const ItemDetail = (prop: {
 	}
 
 	const prices = (size: string): { stockx: string; klekt: string } => {
-		const stockxPrice = price(size, 'stockx')
-		const klektPrice = price(size, 'klekt')
+		const stockxPrice = price(size, STOCKX)
+		const klektPrice = price(size, KLEKT)
 		return { stockx: stockxPrice, klekt: klektPrice }
 	}
 
@@ -165,7 +166,10 @@ const ItemDetail = (prop: {
 											{row.size}
 										</p>
 										<p
-											onClick={priceClicked.bind(null, 'stockx')}
+											onClick={priceClicked.bind(null, {
+												name: 'StockX',
+												id: 'stockx',
+											})}
 											className={`h-7 rounded-full cursor-pointer flex justify-center items-center w-16 ${
 												row.prices.stockx &&
 												(row.prices.stockx ?? 0) > (row.prices.klekt ?? 0)
@@ -176,7 +180,10 @@ const ItemDetail = (prop: {
 											{row.prices.stockx}
 										</p>
 										<p
-											onClick={priceClicked.bind(null, 'klekt')}
+											onClick={priceClicked.bind(null, {
+												name: 'Klekt',
+												id: 'klekt',
+											})}
 											className={`h-7 rounded-full cursor-pointer flex justify-center items-center w-16 ${
 												row.prices.klekt &&
 												(row.prices.klekt ?? 0) > (row.prices.stockx ?? 0)

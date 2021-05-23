@@ -1,6 +1,6 @@
 import React from 'react'
 import { useState, useRef, useEffect } from 'react'
-import { array, is } from 'superstruct'
+import { array, assert, is } from 'superstruct'
 import { Item } from 'copdeck-scraper/dist/types'
 import { itemImageURL } from 'copdeck-scraper'
 import ItemDetail from '../../Components/ItemDetail'
@@ -15,20 +15,21 @@ const MainTab = (prop: { currency: Currency }) => {
 
 	const searchBar = useRef<HTMLInputElement>(null)
 
-	// todo: delete
-	// const { getItems } = databaseCoordinator()
-	// useEffect(() => {
-	// 	;(async () => {
-	// 		const items = await getItems()
-	// 		setSelectedItem(items[0])
-	// 	})()
-	// }, [])
+	// todo delete
+	const { getItems } = databaseCoordinator()
+	useEffect(() => {
+		;(async () => {
+			const items = await getItems()
+			setSelectedItem(items[0])
+		})()
+	}, [])
 
 	const search = () => {
 		setSearchState('searching')
 		if (searchBar.current?.value) {
 			chrome.runtime.sendMessage({ search: searchBar.current?.value }, (response) => {
 				if (is(response, array(Item))) {
+					console.log(response)
 					if (response.length) {
 						setSearchState(response)
 					} else {

@@ -15,6 +15,8 @@ const AddAlertModal = (prop: {
 	const [selectedStores, setSelectedStores] = useState<StorePrices[]>([])
 	const [selectedSize, setSelectedSize] = useState<string>()
 
+	const supportedStores: Store[] = []
+
 	const [showConfirmationModal, setShowConfirmationModal] = useState(false)
 
 	const storeSelector = useRef<HTMLDivElement>(null)
@@ -26,31 +28,34 @@ const AddAlertModal = (prop: {
 		return prop.selectedItem?.storePrices.filter((prices) => prices.inventory.length) ?? []
 	}
 
-	const selectableSizes = (): string[] => {
-		const sizeSet = new Set<string>()
-		selectedStores.forEach((store) => {
-			return store.inventory.map((inventoryItem) => {
-				sizeSet.add(inventoryItem.size)
-			})
+	const sizeSet = new Set<string>()
+	selectedStores.forEach((store) => {
+		return store.inventory.map((inventoryItem) => {
+			sizeSet.add(inventoryItem.size)
 		})
-		return Array.from(sizeSet)
+	})
+	const selectableSizes = Array.from(sizeSet)
+
+	if (!selectedSize && selectableSizes && selectableSizes.length) {
+		console.log('waaaa')
+		setSelectedSize(selectableSizes[0])
 	}
 
 	const storeToggled = (event: { target: HTMLInputElement }) => {
 		const isChecked = event.target.checked
 		const storeName = event.target.value
-		const store = selectableStores().find((s) => s.store === storeName)
+		const store = selectableStores().find((s) => s.store.id === storeName)
 		if (!store) return
 
 		setSelectedStores((stores) => {
 			if (isChecked) {
-				if (!stores.find((s) => s.store === storeName)) {
+				if (!stores.find((s) => s.store.id === storeName)) {
 					return [...stores, store]
 				} else {
 					return stores
 				}
 			} else {
-				return stores.filter((s) => s.store !== storeName)
+				return stores.filter((s) => s.store.id !== storeName)
 			}
 		})
 	}
@@ -60,15 +65,13 @@ const AddAlertModal = (prop: {
 	}
 
 	const storeName = (store: Store): string => {
-		switch (store) {
+		switch (store.id) {
 			case 'klekt':
 				return 'Klekt'
 			case 'stockx':
 				return 'StockX'
-			case 'restocks':
-				return 'Restocks'
-			default:
-				return ''
+			// case 'restocks':
+			// 	return 'Restocks'
 		}
 	}
 
@@ -86,13 +89,9 @@ const AddAlertModal = (prop: {
 	}
 
 	const addAlert = (event: React.FormEvent<HTMLFormElement>) => {
-		console.log('sdsd')
 		event.preventDefault()
 		const price = parseFloat(priceField.current?.value ?? '')
 		// todo: better error handling
-		console.log(price)
-		console.log(selectedSize)
-		console.log(selectedStores)
 		if (!price || !selectedSize || !selectedStores.length || !prop.selectedItem) return
 		const newAlert: PriceAlert = {
 			name: `${price} - ${selectedSize} (${selectedStores
@@ -104,7 +103,7 @@ const AddAlertModal = (prop: {
 			targetSize: selectedSize,
 			stores: selectedStores.map((store) => store.store),
 		}
-		console.log('yo')
+
 		saveAlert(newAlert, prop.selectedItem)
 			.then((result) => {
 				console.log(result)
@@ -116,43 +115,56 @@ const AddAlertModal = (prop: {
 
 	return (
 		<>
-			<div className="fixed inset-0 flex flex-col overflow-y-scroll">
-				<button onClick={prop.setShowAddPriceAlertModal.bind(null, false)}> Back</button>
-				<h3>Add price alert</h3>
-				<form onSubmit={addAlert} style={{ display: 'flex', flexDirection: 'column' }}>
-					<label>Select Store:</label>
-					<div style={{ display: 'flex', flexDirection: 'column' }} ref={storeSelector}>
-						{selectableStores().map((store) => {
-							return (
-								<div style={{ display: 'flex', flexDirection: 'row' }}>
-									<label htmlFor={store.store}>{storeLabel(store)}</label>
-									<input
-										type="checkbox"
-										id={store.store}
-										name={store.store}
-										value={store.store}
-										onChange={storeToggled}
-									/>
-								</div>
-							)
-						})}
-					</div>
-					<select onChange={sizeSelected} name="size" id="size">
-						{selectableSizes().map((size) => {
-							return <option value={size}>{size}</option>
-						})}
-					</select>
-					<label htmlFor="pricefield">Target Price:</label>
-					<input
-						ref={priceField}
-						type="number"
-						name="pricefield"
-						id="pricefield"
-						step={1}
-						min={0}
-					/>
-					<input type="submit" value="Add price alert" />
-				</form>
+			<div className="fixed inset-0 flex flex-col overflow-y-scroll bg-gray-100">
+				<div className="p-3">
+					<h1 className="font-bold mb-4">Add Price Alert</h1>
+
+					<form onSubmit={addAlert} className="flex flex-col">
+						<h3 className="text-base">Select store(s)</h3>
+						<div className="flex flex-row space-x-2 items-center" ref={storeSelector}>
+							{selectableStores().map((store) => {
+								return (
+									<div className="flex flex-row items-center space-x-1">
+										<label
+											htmlFor={store.store.id}
+											className="text-lg text-gray-800 font-bold"
+										>
+											{store.store.name}
+										</label>
+										<input
+											name={store.store.id}
+											value={store.store.id}
+											type="checkbox"
+											className="h-5 w-5 text-theme-blue rounded"
+											onChange={storeToggled}
+										></input>
+									</div>
+								)
+							})}
+						</div>
+						<select onChange={sizeSelected} name="size" id="size">
+							{selectableSizes.map((size) => {
+								return <option value={size}>{size}</option>
+							})}
+						</select>
+						<label htmlFor="pricefield">Target Price:</label>
+						<input
+							ref={priceField}
+							type="number"
+							name="pricefield"
+							id="pricefield"
+							step={1}
+							min={0}
+						/>
+						<input type="submit" value="Add price alert" />
+					</form>
+					<button
+						className="button-default text-white bg-theme-orange hover:bg-theme-orange-dark rounded-lg bg h-10 shadow-md border-transparent"
+						onClick={prop.setShowAddPriceAlertModal.bind(null, false)}
+					>
+						Cancel
+					</button>
+				</div>
 			</div>
 			{/* <Popup
 				title="Price alert added!"

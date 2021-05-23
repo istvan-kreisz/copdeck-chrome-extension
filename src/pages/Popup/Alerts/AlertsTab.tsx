@@ -18,8 +18,6 @@ const AlertsTab = (prop: { activeTab: 'main' | 'settings' | 'alerts'; currency: 
 		if (prop.activeTab === 'alerts') {
 			;(async () => {
 				const alertsWithItems = await getAlertsWithItems()
-				console.log(alertsWithItems[0][1])
-				console.log(alertsWithItems[0][0])
 				setPriceAlerts(alertsWithItems)
 			})()
 		}

@@ -4,7 +4,7 @@ import SettingsTab from './Settings/SettingsTab'
 import AlertsTab from './Alerts/AlertsTab'
 import { useState, useEffect } from 'react'
 import { Currency, Settings } from '../utils/types'
-import { assert, array, is, union, literal } from 'superstruct'
+import { assert } from 'superstruct'
 import { SearchIcon, CogIcon, BellIcon, DeviceMobileIcon } from '@heroicons/react/outline'
 
 const Popup = () => {
