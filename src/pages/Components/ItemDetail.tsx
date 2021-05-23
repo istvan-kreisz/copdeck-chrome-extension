@@ -1,7 +1,7 @@
-import React from 'react'
+import React, { StrictMode } from 'react'
 import { useEffect, useState, useRef } from 'react'
 import { assert } from 'superstruct'
-import { Item } from 'copdeck-scraper/dist/types'
+import { Item, StorePrices, Store } from 'copdeck-scraper/dist/types'
 import { itemImageURL, itemBestPrice, bestStoreInfo } from 'copdeck-scraper'
 import AddAlertModal from '../Popup/Main/AddAlertModal'
 import { ChevronLeftIcon } from '@heroicons/react/outline'
@@ -31,6 +31,41 @@ const ItemDetail = (prop: {
 	const backClicked = () => {
 		didClickBack.current = true
 		prop.setSelectedItem(() => null)
+	}
+
+	const sizeSet = new Set<string>()
+	const allStores =
+		prop.selectedItem?.storePrices.filter((prices) => prices.inventory.length) ?? []
+	allStores.forEach((store) => {
+		return store.inventory.map((inventoryItem) => {
+			sizeSet.add(inventoryItem.size)
+		})
+	})
+	const allSizes = Array.from(sizeSet).sort((a, b) => {
+		const regex = /[\d|,|.|e|E|\+]+/g
+		const aNum = parseFloat(a.match(regex)?.[0] ?? '')
+		const bNum = parseFloat(b.match(regex)?.[0] ?? '')
+		if (aNum < bNum) return -1
+		if (aNum > bNum) return 1
+		return 0
+	})
+
+	const price = (size: string, store: Store): string => {
+		const prices = allStores
+			.find((s) => s.store === store)
+			?.inventory.find((inventoryItem) => inventoryItem.size === size)
+		let price = priceType === 'ask' ? prices?.lowestAsk : prices?.highestBid
+		if (price) {
+			return (prices?.currency === 'EUR' ? '€' : '$') + price
+		} else {
+			return '-'
+		}
+	}
+
+	const prices = (size: string): { stockx: string; klekt: string } => {
+		const stockxPrice = price(size, 'stockx')
+		const klektPrice = price(size, 'klekt')
+		return { stockx: stockxPrice, klekt: klektPrice }
 	}
 
 	// todo: check retail price
@@ -96,43 +131,67 @@ const ItemDetail = (prop: {
 							Bid
 						</button>
 					</div>
-					<ul className="bg-white w-screen">
-						{prop.selectedItem.storePrices.map((storePrice) => {
-							return (
-								<li key={storePrice.store}>
-									<h3>{storePrice.store}</h3>
-									<ul>
-										{storePrice.inventory
-											.sort((a, b) => {
-												const regex = /[\d|,|.|e|E|\+]+/g
-												const aNum = parseFloat(
-													a.size.match(regex)?.[0] ?? ''
-												)
-												const bNum = parseFloat(
-													b.size.match(regex)?.[0] ?? ''
-												)
-												if (aNum < bNum) return -1
-												if (aNum > bNum) return 1
-												return 0
-											})
-											.map((inventoryItem) => {
-												return (
-													<li
-														key={inventoryItem.size}
-													>{`${inventoryItem.size} ${inventoryItem.lowestAsk}`}</li>
-												)
-											})}
-									</ul>
-								</li>
-							)
-						})}
+					<ul className="bg-white w-full flex flex-col space-y-2 mt-8">
+						<li key={'header'} className="flex flex-row space-x-4">
+							<p className="h-7 rounded-full flex justify-center items-center w-16">
+								Sizes
+							</p>
+							<p className="h-7 text-gray-800 text-lg font-bold rounded-full flex justify-center items-center w-16">
+								StockX
+							</p>
+							<p className="h-7 text-gray-800 text-lg font-bold rounded-full flex justify-center items-center w-16">
+								Klekt
+							</p>
+							<p className="flex-grow"></p>
+						</li>
+
+						{allSizes
+							.map((size) => {
+								return { size: size, prices: prices(size) }
+							})
+							.map((row) => {
+								return (
+									<li key={row.size} className="flex flex-row space-x-4">
+										<p className="bg-gray-300 h-7 rounded-full flex justify-center items-center w-16">
+											{row.size}
+										</p>
+										<p
+											className={`h-7 rounded-full flex justify-center items-center w-16 ${
+												row.prices.stockx &&
+												(row.prices.stockx ?? 0) > (row.prices.klekt ?? 0)
+													? 'border-2 border-green-500'
+													: 'border-2 border-white'
+											}`}
+										>
+											{row.prices.stockx}
+										</p>
+										<p
+											className={`h-7 rounded-full flex justify-center items-center w-16 ${
+												row.prices.klekt &&
+												(row.prices.klekt ?? 0) > (row.prices.stockx ?? 0)
+													? 'border-2 border-green-500'
+													: 'border-2 border-white'
+											}`}
+										>
+											{row.prices.klekt}
+										</p>
+										<p className="flex-grow"></p>
+									</li>
+								)
+							})}
 					</ul>
 				</section>
-				{prop.selectedItem.storePrices.length ? (
-					<button onClick={setShowAddPriceAlertModal.bind(null, true)}>
-						Add Price Alert
-					</button>
-				) : null}
+				<section className="bg-white w-screen p-3">
+					{prop.selectedItem.storePrices.length ? (
+						<button
+							style={{ fontWeight: 'normal' }}
+							className="mx-auto button-default h-9 flex-shrink-0 flex-grow-0 rounded-full font-thin bg-black text-white"
+							onClick={setShowAddPriceAlertModal.bind(null, true)}
+						>
+							Add price alert
+						</button>
+					) : null}
+				</section>
 			</div>
 			{showAddPriceAlertModal ? (
 				<AddAlertModal
