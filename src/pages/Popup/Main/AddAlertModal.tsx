@@ -108,67 +108,65 @@ const AddAlertModal = (prop: {
 
 	return (
 		<>
-			<div className="fixed inset-0 flex flex-col overflow-y-scroll bg-gray-100">
-				<div className="p-3">
-					<h1 className="font-bold mb-4">Add Price Alert</h1>
+			<div className="fixed inset-0 bg-gray-100 p-3">
+				<h1 className="font-bold mb-4">Add Price Alert</h1>
 
-					<form onSubmit={addAlert} className="flex flex-col">
-						<h3 className="text-base font-bold mt-2 mb-1">1. Select store(s)</h3>
-						<div className="flex flex-col space-y-0 items-start" ref={storeSelector}>
-							{selectableStores().map((store) => {
-								return (
-									<div className="flex flex-row items-center space-x-2 m-0">
-										<label
-											htmlFor={store.store.id}
-											className="text-lg text-gray-800 m-0"
-										>
-											{storeLabel(store)}
-										</label>
-										<input
-											name={store.store.id}
-											value={store.store.id}
-											type="checkbox"
-											className="h-5 w-5 text-theme-blue rounded m-0"
-											onChange={storeToggled}
-										></input>
-									</div>
-								)
-							})}
-						</div>
-						<h3 className="text-base font-bold mt-4 mb-1">2. Select size</h3>
+				<form onSubmit={addAlert} className="flex flex-col">
+					<h3 className="text-base font-bold mt-2 mb-1">1. Select store(s)</h3>
+					<div className="flex flex-col space-y-0 items-start" ref={storeSelector}>
+						{selectableStores().map((store) => {
+							return (
+								<div className="flex flex-row items-center space-x-2 m-0">
+									<label
+										htmlFor={store.store.id}
+										className="text-lg text-gray-800 m-0"
+									>
+										{storeLabel(store)}
+									</label>
+									<input
+										name={store.store.id}
+										value={store.store.id}
+										type="checkbox"
+										className="h-5 w-5 text-theme-blue rounded m-0"
+										onChange={storeToggled}
+									></input>
+								</div>
+							)
+						})}
+					</div>
+					<h3 className="text-base font-bold mt-4 mb-1">2. Select size</h3>
 
-						<select
-							className="w-full bg-white rounded-xl border border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 text-base outline-none leading-8"
-							onChange={sizeSelected}
-							name="size"
-							id="size"
-						>
-							{selectableSizes.map((size) => {
-								return <option value={size}>{size}</option>
-							})}
-						</select>
-						<h3 className="text-base font-bold mt-4 mb-1">{`3. Select target price ${prop.currency.symbol}`}</h3>
-						<input
-							className="w-full bg-white rounded-xl border border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 text-base outline-none leading-8"
-							ref={priceField}
-							type="number"
-							name="pricefield"
-							id="pricefield"
-						/>
-
-						<input
-							className="mt-4 button-default text-white bg-theme-orange hover:bg-theme-orange-dark rounded-lg bg h-10 shadow-md border-transparent"
-							type="submit"
-							value="Add alert"
-						/>
-					</form>
-					<button
-						className="mt-2 w-full button-default text-theme-orange rounded-lg bg h-10"
-						onClick={prop.setShowAddPriceAlertModal.bind(null, false)}
+					<select
+						className="w-full bg-white rounded-xl border border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 text-base outline-none leading-8"
+						onChange={sizeSelected}
+						name="size"
+						id="size"
 					>
-						Cancel
-					</button>
-				</div>
+						{selectableSizes.map((size) => {
+							return <option value={size}>{size}</option>
+						})}
+					</select>
+					<h3 className="text-base font-bold mt-4 mb-1">{`3. Select target price ${prop.currency.symbol}`}</h3>
+					<input
+						className="w-full bg-white rounded-xl border border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 text-base outline-none leading-8"
+						ref={priceField}
+						type="number"
+						name="pricefield"
+						id="pricefield"
+					/>
+
+					<input
+						className="mt-4 button-default text-white bg-theme-orange hover:bg-theme-orange-dark rounded-lg bg h-10 shadow-md border-transparent"
+						type="submit"
+						value="Add alert"
+					/>
+				</form>
+				<button
+					className="mt-2 w-full button-default text-theme-orange rounded-lg bg h-10"
+					onClick={prop.setShowAddPriceAlertModal.bind(null, false)}
+				>
+					Cancel
+				</button>
 			</div>
 			<Popup
 				title="Oh-oh"

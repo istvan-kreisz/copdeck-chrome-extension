@@ -8,8 +8,8 @@ type AlertWithItem = [PriceAlert, Item]
 export const databaseCoordinator = () => {
 	const defaultSettings: Settings = {
 		currency: 'EUR',
-		updateInterval: 10,
-		notificationFrequency: 3,
+		updateInterval: 30,
+		notificationFrequency: 24,
 		proxies: undefined,
 	}
 

@@ -12,7 +12,7 @@ import { Settings } from '../utils/types'
 import { parse, stringify } from '../utils/proxyparser'
 import { v4 as uuidv4 } from 'uuid'
 
-const minUpdateInterval = 1
+const minUpdateInterval = 5
 const maxUpdateInterval = 1440
 
 const updatePrices = async () => {
