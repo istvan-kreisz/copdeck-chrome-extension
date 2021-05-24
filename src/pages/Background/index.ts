@@ -53,7 +53,6 @@ const updatePrices = async (forced: boolean = false) => {
 				) {
 					return new Promise<Item>((resolve, reject) => {
 						const delay = Math.random() * requestDelayMax
-						console.log('delay: ' + delay)
 						setTimeout(() => {
 							browserAPI
 								.getItemPrices(item)
@@ -107,6 +106,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 	if (msg.search) {
 		;(async () => {
 			try {
+				console.log('searching')
 				const searchTerm = msg.search
 				assert(searchTerm, string())
 				const items = await browserAPI.searchItems(searchTerm)

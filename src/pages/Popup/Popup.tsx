@@ -9,7 +9,7 @@ import { SearchIcon, CogIcon, BellIcon, DeviceMobileIcon } from '@heroicons/reac
 import { databaseCoordinator } from '../services/databaseCoordinator'
 
 const Popup = () => {
-	const [activeTab, setActiveTab] = useState<'main' | 'settings' | 'alerts'>('settings')
+	const [activeTab, setActiveTab] = useState<'main' | 'settings' | 'alerts'>('main')
 	const [currency, setCurrency] = useState<Currency>({ code: 'EUR', symbol: '€' })
 	const [toastMessage, setToastMessage] = useState<{ message: string; show: boolean }>({
 		message: '',

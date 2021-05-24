@@ -6,6 +6,7 @@ import { itemImageURL, bestStoreInfo } from 'copdeck-scraper'
 import AddAlertModal from '../Popup/Main/AddAlertModal'
 import { ChevronLeftIcon } from '@heroicons/react/outline'
 import { Currency } from '../utils/types'
+import LoadingIndicator from '../Components/LoadingIndicator'
 
 const ItemDetail = (prop: {
 	selectedItem: Item
@@ -22,16 +23,22 @@ const ItemDetail = (prop: {
 	const [priceType, setPriceType] = useState<'ask' | 'bid'>('ask')
 	const didClickBack = useRef(false)
 
+	const [isLoadingPrices, setIsLoadingPrices] = useState(false)
+
 	const storeInfo = bestStoreInfo(prop.selectedItem)
 
 	useEffect(() => {
 		didClickBack.current = false
 		if (prop.selectedItem && prop.selectedItem.storePrices.length == 0) {
+			setIsLoadingPrices(true)
 			chrome.runtime.sendMessage({ getItemDetails: prop.selectedItem }, (item) => {
-				assert(item, Item)
-				if (!didClickBack.current) {
-					prop.setSelectedItem((current) => (current ? item : null))
-				}
+				try {
+					assert(item, Item)
+					if (!didClickBack.current) {
+						prop.setSelectedItem((current) => (current ? item : null))
+					}
+				} catch {}
+				setIsLoadingPrices(false)
 			})
 		}
 	}, [])
@@ -124,6 +131,7 @@ const ItemDetail = (prop: {
 						) : null}
 					</div>
 				</section>
+
 				<section className="bg-white w-screen p-3">
 					<div className="flex flex-row space-x-2 justify-between items-center flex-nowrap">
 						<div className="flex flex-col">
@@ -162,6 +170,11 @@ const ItemDetail = (prop: {
 							</p>
 							<p className="flex-grow"></p>
 						</li>
+						<div className="mt-6 ml-4">
+							{isLoadingPrices && !prop.selectedItem.storePrices.length ? (
+								<LoadingIndicator title="Loading Prices"></LoadingIndicator>
+							) : null}
+						</div>
 
 						{allSizes
 							.map((size) => {

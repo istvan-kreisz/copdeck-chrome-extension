@@ -72,7 +72,9 @@ const MainTab = (prop: {
 					</button>
 				</div>
 				<ul className="my-4 flex flex-col space-y-3">
-					{searchState === 'searching' ? <LoadingIndicator></LoadingIndicator> : null}
+					{searchState === 'searching' ? (
+						<LoadingIndicator title="Loading"></LoadingIndicator>
+					) : null}
 					{typeof searchState === 'object' &&
 					searchState &&
 					searchState['length'] === 0 ? (
