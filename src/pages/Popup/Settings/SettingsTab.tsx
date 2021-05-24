@@ -1,7 +1,6 @@
 import React from 'react'
 import { useState, useRef, useEffect } from 'react'
-import { assert } from 'superstruct'
-import { Settings, Currency } from '../../utils/types'
+import { Currency } from '../../utils/types'
 import { databaseCoordinator } from '../../services/databaseCoordinator'
 
 const SettingsTab = () => {

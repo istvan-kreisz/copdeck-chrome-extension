@@ -31,6 +31,7 @@ const Popup = () => {
 				)
 			})
 		})()
+		chrome.runtime.sendMessage({ refresh: true })
 	}, [])
 
 	const hideToast = () => {

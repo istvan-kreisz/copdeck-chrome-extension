@@ -126,8 +126,6 @@ export const databaseCoordinator = () => {
 		item.updated = new Date().getTime()
 		newItems.push(item)
 		await saveItems(newItems)
-		console.log('saved items')
-		console.log(newItems)
 	}
 
 	const cacheItem = async (item: Item) => {
@@ -166,11 +164,9 @@ export const databaseCoordinator = () => {
 	}
 
 	const saveAlert = async (alert: PriceAlert, item: Item) => {
-		console.log('saaave')
 		const alerts = await getAlerts()
 		await asyncSet('alerts', [...alerts, alert])
 		await saveItem(item)
-		console.log(item)
 	}
 
 	const saveSettings = async (settings: Settings) => {
