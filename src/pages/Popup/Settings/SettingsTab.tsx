@@ -61,6 +61,10 @@ const SettingsTab = () => {
 		setSelectedCurrency(event.target.value as Currency['code'])
 	}
 
+	const clickedContact = () => {
+		chrome.tabs.create({ url: 'https://copdeck.com/contact' })
+	}
+
 	return (
 		<div className="bg-gray-100 p-3 w-full h-full overflow-y-scroll overflow-x-hidden">
 			<h1 key="header" className="font-bold mb-4">
@@ -141,6 +145,17 @@ const SettingsTab = () => {
 					value="Save Settings"
 				/>
 			</form>
+			<div className="mt-5 mb-2 border border-gray-300"></div>
+			<div className="flex flex-row flex-nowrap items-center">
+				<h3 className="text-lg font-bold text-gray-600">Got questions?</h3>
+				<button
+					onClick={clickedContact}
+					className="button-default text-theme-blue border-transparent underline"
+					type="submit"
+				>
+					Contact us!
+				</button>
+			</div>
 		</div>
 	)
 }

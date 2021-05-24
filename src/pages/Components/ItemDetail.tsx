@@ -18,7 +18,6 @@ const ItemDetail = (prop: {
 		}>
 	>
 }) => {
-	// todo
 	const [showAddPriceAlertModal, setShowAddPriceAlertModal] = useState(false)
 	const [priceType, setPriceType] = useState<'ask' | 'bid'>('ask')
 	const didClickBack = useRef(false)

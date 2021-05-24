@@ -81,8 +81,6 @@ const getItemDetails = async (item: Item) => {
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 	if (msg.search) {
 		;(async () => {
-			// todo remove
-			await updatePrices()
 			const searchTerm = msg.search
 			assert(searchTerm, string())
 			const items = await browserAPI.searchItems(searchTerm)
@@ -258,20 +256,14 @@ chrome.storage.onChanged.addListener(async function (changes, namespace) {
 // })
 
 // todo refetch sneakers when currrency changes
-// todo: figure out currecy, size updates
 // todo: why does communication keep breaking
-// add check for duplicate alerts
 // todo: image caching
 // todo: add refresh button
-// todo: alert added confirmations
-// todo: QUOTA_BYTES_PER_ITEM
 // todo: reset alarm when fetch interval changed
 // todo refine error handling
 // todo: clearr cache
 // todo: add delay between requests
-// todo: add caching
-// todo: sizes
 // todo: add timeout
 // todo: add retry
 // todo: useragents
-// todo:
+// todo: test notifications
