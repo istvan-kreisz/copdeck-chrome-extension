@@ -9,7 +9,6 @@ import { CheckIcon } from '@heroicons/react/outline'
 import { SearchIcon, CogIcon, BellIcon, DeviceMobileIcon } from '@heroicons/react/outline'
 
 const Popup = () => {
-	// todo: set to main
 	const [activeTab, setActiveTab] = useState<'main' | 'settings' | 'alerts'>('main')
 	const [currency, setCurrency] = useState<Currency>({ code: 'EUR', symbol: '€' })
 	const [toastMessage, setToastMessage] = useState<{ message: string; show: boolean }>({
@@ -43,7 +42,7 @@ const Popup = () => {
 		if (toastMessage) {
 			interval = setTimeout(() => {
 				hideToast()
-			}, 2500)
+			}, 2000)
 		}
 		return () => {
 			if (interval) clearTimeout(interval)

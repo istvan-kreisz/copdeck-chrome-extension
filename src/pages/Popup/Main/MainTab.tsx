@@ -23,15 +23,6 @@ const MainTab = (prop: {
 
 	const searchBar = useRef<HTMLInputElement>(null)
 
-	// todo delete
-	const { getItems } = databaseCoordinator()
-	useEffect(() => {
-		;(async () => {
-			const items = await getItems()
-			setSelectedItem(items[0])
-		})()
-	}, [])
-
 	const search = () => {
 		setSearchState('searching')
 		if (searchBar.current?.value) {

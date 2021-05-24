@@ -11,6 +11,7 @@ const AlertListItem = ({
 	currency,
 	targetSize,
 	targetPrice,
+	stores,
 	onDeleted,
 }) => {
 	return (
@@ -29,6 +30,11 @@ const AlertListItem = ({
 						className={`h-5 flex items-center flex-shrink-0 px-2 flex-grow-0 rounded-full bg-theme-orange text-white`}
 					>
 						{currency + targetPrice}
+					</p>
+				</div>
+				<div className="flex space-x-1">
+					<p className={`h-5 flex-shrink-0 px-2 rounded-full bg-theme-green text-white`}>
+						{`${stores.join(', ')}`}
 					</p>
 				</div>
 			</div>
