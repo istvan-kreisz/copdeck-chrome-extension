@@ -3,19 +3,18 @@ import {
 	promiseAllSkippingErrors,
 	isOlderThan,
 	itemBestPrice,
-	itemImageURL,
+	config,
 } from 'copdeck-scraper'
-import { assert, string, number, array } from 'superstruct'
-import { Item, PriceAlert } from 'copdeck-scraper/dist/types'
+import { assert, string, is } from 'superstruct'
+import { Item } from 'copdeck-scraper/dist/types'
 import { databaseCoordinator } from '../services/databaseCoordinator'
 import { Settings } from '../utils/types'
 import { parse, stringify } from '../utils/proxyparser'
-import { v4 as uuidv4 } from 'uuid'
 
 const minUpdateInterval = 5
 const maxUpdateInterval = 1440
 
-const updatePrices = async () => {
+const updatePrices = async (forced: boolean = false) => {
 	const { getItems, saveItems, getAlerts, updateItems, getSettings } = databaseCoordinator()
 
 	const settings = await getSettings()
@@ -35,9 +34,11 @@ const updatePrices = async () => {
 		activeItems.map((item) => {
 			const lastUpdated = item.updated
 			if (
+				forced ||
 				(lastUpdated && isOlderThan(lastUpdated, settings.updateInterval, 'minutes')) ||
 				!lastUpdated
 			) {
+				console.log(item)
 				return browserAPI.getItemPrices(item)
 			} else {
 				return new Promise<Item>((resolve, reject) => reject())
@@ -98,7 +99,6 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 		return true
 	} else if (msg.settings) {
 		const { saveSettings } = databaseCoordinator()
-
 		;(async () => {
 			const item = msg.settings
 			assert(item, Settings)
@@ -217,15 +217,15 @@ const sendNotifications = async () => {
 }
 
 chrome.alarms.onAlarm.addListener(async () => {
-	await updatePrices()
-	await sendNotifications()
+	// await updatePrices()
+	// await sendNotifications()
 })
 
 chrome.runtime.onInstalled.addListener(async () => {
 	// await addAlarm(false)
 
 	await updatePrices()
-	await sendNotifications()
+	// await sendNotifications()
 
 	chrome.storage.onChanged.addListener(function (changes, namespace) {
 		for (let [key, { oldValue, newValue }] of Object.entries(changes)) {
@@ -237,6 +237,19 @@ chrome.runtime.onInstalled.addListener(async () => {
 	})
 })
 
+chrome.storage.onChanged.addListener(async function (changes, namespace) {
+	const settingsNew = changes.settings?.newValue
+	const settingsOld = changes.settings?.oldValue
+	if (settingsNew && settingsOld && is(settingsNew, Settings) && is(settingsOld, Settings)) {
+		//
+		if (settingsOld.currency !== settingsNew.currency) {
+			config.currency = settingsNew.currency
+			console.log('refetching prices')
+			await updatePrices(true)
+		}
+	}
+})
+
 // todo: add uninstall survey
 // chrome.runtime.onInstalled.addListener((reason) => {
 // 	if (reason === chrome.runtime.OnInstalledReason.INSTALL) {
@@ -244,11 +257,13 @@ chrome.runtime.onInstalled.addListener(async () => {
 // 	}
 // })
 
+// todo refetch sneakers when currrency changes
 // todo: figure out currecy, size updates
+// todo: why does communication keep breaking
 // add check for duplicate alerts
 // todo: image caching
 // todo: add refresh button
-// todo: alert added confirmation
+// todo: alert added confirmations
 // todo: QUOTA_BYTES_PER_ITEM
 // todo: reset alarm when fetch interval changed
 // todo refine error handling

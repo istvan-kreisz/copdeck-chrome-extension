@@ -3,10 +3,10 @@ import MainTab from './Main/MainTab'
 import SettingsTab from './Settings/SettingsTab'
 import AlertsTab from './Alerts/AlertsTab'
 import { useState, useEffect } from 'react'
-import { Currency, Settings } from '../utils/types'
-import { assert } from 'superstruct'
+import { Currency } from '../utils/types'
 import { CheckIcon } from '@heroicons/react/outline'
 import { SearchIcon, CogIcon, BellIcon, DeviceMobileIcon } from '@heroicons/react/outline'
+import { databaseCoordinator } from '../services/databaseCoordinator'
 
 const Popup = () => {
 	const [activeTab, setActiveTab] = useState<'main' | 'settings' | 'alerts'>('settings')
@@ -16,11 +16,11 @@ const Popup = () => {
 		show: false,
 	})
 
+	const { listenToSettingsChanges } = databaseCoordinator()
+
 	useEffect(() => {
-		chrome.storage.onChanged.addListener(function (changes, namespace) {
-			const settings = changes.settings?.newValue
-			if (settings) {
-				assert(settings, Settings)
+		;(async () => {
+			await listenToSettingsChanges((settings) => {
 				setCurrency(
 					settings.currency === 'EUR'
 						? {
@@ -29,8 +29,8 @@ const Popup = () => {
 						  }
 						: { code: settings.currency, symbol: '$' }
 				)
-			}
-		})
+			})
+		})()
 	}, [])
 
 	const hideToast = () => {
@@ -39,7 +39,7 @@ const Popup = () => {
 
 	useEffect(() => {
 		let interval
-		if (toastMessage) {
+		if (toastMessage.show) {
 			interval = setTimeout(() => {
 				hideToast()
 			}, 2000)

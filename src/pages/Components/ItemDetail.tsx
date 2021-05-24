@@ -87,8 +87,6 @@ const ItemDetail = (prop: {
 		}
 	}
 
-	// todo: check retail price
-
 	return (
 		<>
 			<div className="flexbg-white bg-gray-100 flex-col fixed inset-0 overflow-y-scroll">
@@ -118,7 +116,9 @@ const ItemDetail = (prop: {
 						{prop.selectedItem.retailPrice ? (
 							<div className="flex flex-col items-center">
 								<p className="text-gray-800 font-bold text-base m-0">
-									{prop.selectedItem.retailPrice}
+									{prop.selectedItem.retailPrice
+										? prop.currency.symbol + prop.selectedItem.retailPrice
+										: '-'}
 								</p>
 								<p className="m-0">Retail Price</p>
 							</div>

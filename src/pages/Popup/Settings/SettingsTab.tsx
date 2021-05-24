@@ -2,9 +2,10 @@ import React from 'react'
 import { useState, useRef, useEffect } from 'react'
 import { assert } from 'superstruct'
 import { Settings, Currency } from '../../utils/types'
+import { databaseCoordinator } from '../../services/databaseCoordinator'
 
 const SettingsTab = () => {
-	const currencies = ['EUR', 'US']
+	const currencies = ['EUR', 'USD']
 
 	const proxyTextField = useRef<HTMLTextAreaElement>(null)
 	const currencySelector = useRef<HTMLDivElement>(null)
@@ -13,13 +14,12 @@ const SettingsTab = () => {
 	const [notificationFrequency, setNotificationFrequency] = useState('24')
 	const [selectedCurrency, setSelectedCurrency] = useState<Currency['code']>('EUR')
 
-	useEffect(() => {
-		chrome.storage.onChanged.addListener(function (changes, namespace) {
-			const settings = changes.settings?.newValue
-			if (settings) {
-				// console.log(settings)
-				assert(settings, Settings)
+	const { listenToSettingsChanges } = databaseCoordinator()
 
+	useEffect(() => {
+		;(async () => {
+			await listenToSettingsChanges((settings) => {
+				console.log(settings)
 				setSelectedCurrency(settings.currency)
 
 				const proxyField = proxyTextField.current
@@ -27,9 +27,10 @@ const SettingsTab = () => {
 					proxyField.value = settings.proxies ?? ''
 				}
 
+				setNotificationFrequency(`${settings.notificationFrequency}`)
 				setUpdateInterval(`${settings.updateInterval}`)
-			}
-		})
+			})
+		})()
 	}, [])
 
 	const saveSettings = (event: React.FormEvent<HTMLFormElement>) => {
@@ -43,7 +44,7 @@ const SettingsTab = () => {
 				proxies: proxyTextField.current?.value,
 				currency: selectedCurrency,
 				updateInterval: interval,
-				notificationFrequency: notificationFrequency,
+				notificationFrequency: notificationInterval,
 			},
 		})
 	}
@@ -59,8 +60,6 @@ const SettingsTab = () => {
 	const changedCurrency = (event: { target: HTMLInputElement }) => {
 		setSelectedCurrency(event.target.value as Currency['code'])
 	}
-
-	console.log(selectedCurrency)
 
 	return (
 		<div className="bg-gray-100 p-3 w-full h-full overflow-y-scroll overflow-x-hidden">

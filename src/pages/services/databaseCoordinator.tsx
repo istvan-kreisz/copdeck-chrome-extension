@@ -78,8 +78,24 @@ export const databaseCoordinator = () => {
 		if (is(settings, Settings)) {
 			return settings
 		} else {
+			await saveSettings(defaultSettings)
 			return defaultSettings
 		}
+	}
+
+	const listenToSettingsChanges = async (callback: (settings: Settings) => void) => {
+		chrome.storage.onChanged.addListener(function (changes, namespace) {
+			const settings = changes.settings?.newValue
+			if (settings) {
+				assert(settings, Settings)
+				callback(settings)
+			}
+		})
+		return getSettings()
+			.then((result) => {
+				callback(result)
+			})
+			.catch((err) => {})
 	}
 
 	const getAlertsWithItems = (): Promise<Array<AlertWithItem>> => {
@@ -208,6 +224,7 @@ export const databaseCoordinator = () => {
 		getItemWithId: getItemWithId,
 		getAlerts: getAlerts,
 		getSettings: getSettings,
+		listenToSettingsChanges: listenToSettingsChanges,
 		saveItem: saveItem,
 		cacheItem: cacheItem,
 		saveItems: saveItems,
