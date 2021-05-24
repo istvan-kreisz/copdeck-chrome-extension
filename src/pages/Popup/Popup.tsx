@@ -62,7 +62,7 @@ const Popup = () => {
 		<div className="gap-0 grid grid-row-3 absolute top-0 left-0 right-0 bottom-0 text-left">
 			<main className="bg-transparent relative w-full h-96">
 				<div className={`h-full ${activeTab === 'settings' ? 'block' : 'hidden'}`}>
-					<SettingsTab></SettingsTab>
+					<SettingsTab setToastMessage={setToastMessage}></SettingsTab>
 				</div>
 				<div className={`h-full ${activeTab === 'main' ? 'block' : 'hidden'}`}>
 					<MainTab setToastMessage={setToastMessage} currency={currency}></MainTab>

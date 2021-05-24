@@ -3,7 +3,14 @@ import { useState, useRef, useEffect } from 'react'
 import { Currency } from '../../utils/types'
 import { databaseCoordinator } from '../../services/databaseCoordinator'
 
-const SettingsTab = () => {
+const SettingsTab = (prop: {
+	setToastMessage: React.Dispatch<
+		React.SetStateAction<{
+			message: string
+			show: boolean
+		}>
+	>
+}) => {
 	const currencies = ['EUR', 'USD']
 
 	const proxyTextField = useRef<HTMLTextAreaElement>(null)
@@ -38,14 +45,21 @@ const SettingsTab = () => {
 		const interval = parseFloat(updateInterval ?? '')
 		const notificationInterval = parseFloat(notificationFrequency ?? '24')
 
-		chrome.runtime.sendMessage({
-			settings: {
-				proxies: proxyTextField.current?.value,
-				currency: selectedCurrency,
-				updateInterval: interval,
-				notificationFrequency: notificationInterval,
+		chrome.runtime.sendMessage(
+			{
+				settings: {
+					proxies: proxyTextField.current?.value,
+					currency: selectedCurrency,
+					updateInterval: interval,
+					notificationFrequency: notificationInterval,
+				},
 			},
-		})
+			(response) => {
+				if (response === true) {
+					prop.setToastMessage({ message: 'Settings saved', show: true })
+				}
+			}
+		)
 	}
 
 	const changedInterval = (event: { target: HTMLInputElement }) => {

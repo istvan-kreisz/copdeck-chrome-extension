@@ -153,8 +153,10 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 					item.updateInterval = maxUpdateInterval
 				}
 				saveSettings(item)
+				sendResponse(true)
 			} catch (err) {
 				console.log(err)
+				sendResponse(false)
 			}
 		})()
 		return true
@@ -321,9 +323,11 @@ chrome.storage.onChanged.addListener(async function (changes, namespace) {
 	}
 })
 
-// todo: check uninstall survey
-// todo: add proxy support
 // todo: add goat
+// todo: check uninstall survey
+// todo: add logo
+// todo: add warning about ip usage
+// todo: add proxy support
 // todo: why does communication keep breaking
 // todo: useragents
 // todo: test notifications
