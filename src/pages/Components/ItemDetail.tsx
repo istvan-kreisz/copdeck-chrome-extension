@@ -1,7 +1,7 @@
 import React from 'react'
 import { useEffect, useState, useRef } from 'react'
 import { assert } from 'superstruct'
-import { Item, Store, STOCKX, KLEKT } from 'copdeck-scraper/dist/types'
+import { Item, Store, STOCKX, KLEKT, StoreId } from 'copdeck-scraper/dist/types'
 import { itemImageURL, bestStoreInfo } from 'copdeck-scraper'
 import AddAlertModal from '../Popup/Main/AddAlertModal'
 import { ChevronLeftIcon } from '@heroicons/react/outline'
@@ -11,6 +11,12 @@ const ItemDetail = (prop: {
 	selectedItem: Item
 	setSelectedItem: (callback: (item: Item | null | undefined) => Item | null | undefined) => void
 	currency: Currency
+	setToastMessage: React.Dispatch<
+		React.SetStateAction<{
+			message: string
+			show: boolean
+		}>
+	>
 }) => {
 	// todo
 	const [showAddPriceAlertModal, setShowAddPriceAlertModal] = useState(false)
@@ -53,28 +59,31 @@ const ItemDetail = (prop: {
 		return 0
 	})
 
-	const price = (size: string, store: Store): string => {
+	const price = (size: string, store: Store): [string, number] => {
 		const prices = allStores
 			.find((s) => s.store.id === store.id)
 			?.inventory.find((inventoryItem) => inventoryItem.size === size)
 		let price = priceType === 'ask' ? prices?.lowestAsk : prices?.highestBid
 		if (price) {
-			return prop.currency.symbol + price
+			return [prop.currency.symbol + price, price]
 		} else {
-			return '-'
+			return ['-', 0]
 		}
 	}
 
-	const prices = (size: string): { stockx: string; klekt: string } => {
+	const prices = (size: string): { stockx: string; klekt: string; best: StoreId } => {
 		const stockxPrice = price(size, STOCKX)
 		const klektPrice = price(size, KLEKT)
-		return { stockx: stockxPrice, klekt: klektPrice }
+		const best: StoreId = stockxPrice[0] < klektPrice[0] ? 'stockx' : 'klekt'
+		return { stockx: stockxPrice[0], klekt: klektPrice[0], best: best }
 	}
 
 	const priceClicked = (store: Store) => {
-		const storeInfo = prop.selectedItem.storeInfo.find((s) => s.store === store)
+		const storeInfo = prop.selectedItem.storeInfo.find((s) => s.store.id === store.id)
 		if (storeInfo) {
-			chrome.tabs.create({ url: `https://${storeInfo.store}.com/product/${storeInfo.slug}` })
+			chrome.tabs.create({
+				url: `https://${storeInfo.store.id}.com/product/${storeInfo.slug}`,
+			})
 		}
 	}
 
@@ -171,8 +180,8 @@ const ItemDetail = (prop: {
 												id: 'stockx',
 											})}
 											className={`h-7 rounded-full cursor-pointer flex justify-center items-center w-16 ${
-												row.prices.stockx &&
-												(row.prices.stockx ?? 0) > (row.prices.klekt ?? 0)
+												row.prices.stockx !== '-' &&
+												row.prices.best === 'stockx'
 													? 'border-2 border-green-500'
 													: 'border-2 border-white'
 											}`}
@@ -185,8 +194,8 @@ const ItemDetail = (prop: {
 												id: 'klekt',
 											})}
 											className={`h-7 rounded-full cursor-pointer flex justify-center items-center w-16 ${
-												row.prices.klekt &&
-												(row.prices.klekt ?? 0) > (row.prices.stockx ?? 0)
+												row.prices.klekt !== '-' &&
+												row.prices.best === 'klekt'
 													? 'border-2 border-green-500'
 													: 'border-2 border-white'
 											}`}
@@ -211,11 +220,14 @@ const ItemDetail = (prop: {
 					) : null}
 				</section>
 			</div>
+
 			{showAddPriceAlertModal ? (
 				<AddAlertModal
+					currency={prop.currency}
 					selectedItem={prop.selectedItem}
 					showAddPriceAlertModal={showAddPriceAlertModal}
 					setShowAddPriceAlertModal={setShowAddPriceAlertModal}
+					setToastMessage={prop.setToastMessage}
 				></AddAlertModal>
 			) : null}
 		</>

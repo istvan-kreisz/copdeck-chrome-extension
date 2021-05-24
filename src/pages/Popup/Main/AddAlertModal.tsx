@@ -1,23 +1,30 @@
 import React from 'react'
 import { useRef, useState } from 'react'
-import { Item, Store, StorePrices, PriceAlert } from 'copdeck-scraper/dist/types'
+import { Item, StorePrices, PriceAlert } from 'copdeck-scraper/dist/types'
 import { v4 as uuidv4 } from 'uuid'
 import { databaseCoordinator } from '../../services/databaseCoordinator'
-import { itemImageURL, bestStoreInfo } from 'copdeck-scraper'
-import { ChevronLeftIcon } from '@heroicons/react/outline'
 import Popup from '../../Components/Popup'
+import { Currency } from '../../utils/types'
 
 const AddAlertModal = (prop: {
 	selectedItem: Item
 	showAddPriceAlertModal: boolean
 	setShowAddPriceAlertModal: (show: boolean) => void
+	currency: Currency
+	setToastMessage: React.Dispatch<
+		React.SetStateAction<{
+			message: string
+			show: boolean
+		}>
+	>
 }) => {
 	const [selectedStores, setSelectedStores] = useState<StorePrices[]>([])
 	const [selectedSize, setSelectedSize] = useState<string>()
 
-	const supportedStores: Store[] = []
-
-	const [showConfirmationModal, setShowConfirmationModal] = useState(false)
+	const [error, setError] = useState<{ message: string; show: boolean }>({
+		message: '',
+		show: false,
+	})
 
 	const storeSelector = useRef<HTMLDivElement>(null)
 	const priceField = useRef<HTMLInputElement>(null)
@@ -37,7 +44,6 @@ const AddAlertModal = (prop: {
 	const selectableSizes = Array.from(sizeSet)
 
 	if (!selectedSize && selectableSizes && selectableSizes.length) {
-		console.log('waaaa')
 		setSelectedSize(selectableSizes[0])
 	}
 
@@ -64,25 +70,14 @@ const AddAlertModal = (prop: {
 		setSelectedSize(event.target.value)
 	}
 
-	const storeName = (store: Store): string => {
-		switch (store.id) {
-			case 'klekt':
-				return 'Klekt'
-			case 'stockx':
-				return 'StockX'
-			// case 'restocks':
-			// 	return 'Restocks'
-		}
-	}
-
 	const storeLabel = (store: StorePrices): string => {
-		let label = storeName(store.store)
+		let label = store.store.name
 		if (selectedSize) {
 			const hasSelectedSize = store.inventory.find(
 				(inventoryItem) => inventoryItem.size === selectedSize
 			)
 			if (!hasSelectedSize) {
-				label += ' (selected size not available)'
+				label += ' (size not available)'
 			}
 		}
 		return label
@@ -91,12 +86,13 @@ const AddAlertModal = (prop: {
 	const addAlert = (event: React.FormEvent<HTMLFormElement>) => {
 		event.preventDefault()
 		const price = parseFloat(priceField.current?.value ?? '')
-		// todo: better error handling
-		if (!price || !selectedSize || !selectedStores.length || !prop.selectedItem) return
+
+		if (!price || !selectedSize || !selectedStores.length || !prop.selectedItem) {
+			setError({ message: 'Please fill out all the fields', show: true })
+			return
+		}
 		const newAlert: PriceAlert = {
-			name: `${price} - ${selectedSize} (${selectedStores
-				.map((store) => storeName(store.store))
-				.join()})`,
+			name: prop.selectedItem.name ?? '',
 			id: uuidv4(),
 			itemId: prop.selectedItem?.id ?? '',
 			targetPrice: price,
@@ -104,13 +100,10 @@ const AddAlertModal = (prop: {
 			stores: selectedStores.map((store) => store.store),
 		}
 
-		saveAlert(newAlert, prop.selectedItem)
-			.then((result) => {
-				console.log(result)
-			})
-			.catch((err) => {
-				console.log(err)
-			})
+		saveAlert(newAlert, prop.selectedItem).then(() => {
+			prop.setToastMessage({ message: 'Added price alert', show: true })
+			prop.setShowAddPriceAlertModal(false)
+		})
 	}
 
 	return (
@@ -120,58 +113,69 @@ const AddAlertModal = (prop: {
 					<h1 className="font-bold mb-4">Add Price Alert</h1>
 
 					<form onSubmit={addAlert} className="flex flex-col">
-						<h3 className="text-base">Select store(s)</h3>
-						<div className="flex flex-row space-x-2 items-center" ref={storeSelector}>
+						<h3 className="text-base font-bold mt-2 mb-1">1. Select store(s)</h3>
+						<div className="flex flex-col space-y-0 items-start" ref={storeSelector}>
 							{selectableStores().map((store) => {
 								return (
-									<div className="flex flex-row items-center space-x-1">
+									<div className="flex flex-row items-center space-x-2 m-0">
 										<label
 											htmlFor={store.store.id}
-											className="text-lg text-gray-800 font-bold"
+											className="text-lg text-gray-800 m-0"
 										>
-											{store.store.name}
+											{storeLabel(store)}
 										</label>
 										<input
 											name={store.store.id}
 											value={store.store.id}
 											type="checkbox"
-											className="h-5 w-5 text-theme-blue rounded"
+											className="h-5 w-5 text-theme-blue rounded m-0"
 											onChange={storeToggled}
 										></input>
 									</div>
 								)
 							})}
 						</div>
-						<select onChange={sizeSelected} name="size" id="size">
+						<h3 className="text-base font-bold mt-4 mb-1">2. Select size</h3>
+
+						<select
+							className="w-full bg-white rounded-xl border border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 text-base outline-none leading-8"
+							onChange={sizeSelected}
+							name="size"
+							id="size"
+						>
 							{selectableSizes.map((size) => {
 								return <option value={size}>{size}</option>
 							})}
 						</select>
-						<label htmlFor="pricefield">Target Price:</label>
+						<h3 className="text-base font-bold mt-4 mb-1">{`3. Select target price ${prop.currency.symbol}`}</h3>
 						<input
+							className="w-full bg-white rounded-xl border border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 text-base outline-none leading-8"
 							ref={priceField}
 							type="number"
 							name="pricefield"
 							id="pricefield"
-							step={1}
-							min={0}
 						/>
-						<input type="submit" value="Add price alert" />
+
+						<input
+							className="mt-4 button-default text-white bg-theme-orange hover:bg-theme-orange-dark rounded-lg bg h-10 shadow-md border-transparent"
+							type="submit"
+							value="Add alert"
+						/>
 					</form>
 					<button
-						className="button-default text-white bg-theme-orange hover:bg-theme-orange-dark rounded-lg bg h-10 shadow-md border-transparent"
+						className="mt-2 w-full button-default text-theme-orange rounded-lg bg h-10"
 						onClick={prop.setShowAddPriceAlertModal.bind(null, false)}
 					>
 						Cancel
 					</button>
 				</div>
 			</div>
-			{/* <Popup
-				title="Price alert added!"
-				message="bblah bblah bblah bblah bblah bblah bblah bblah"
-				open={true}
-				close={setShowConfirmationModal}
-			></Popup> */}
+			<Popup
+				title="Oh-oh"
+				message={error?.message}
+				open={error?.show}
+				close={setError.bind(null, { message: error?.message ?? '', show: false })}
+			></Popup>
 		</>
 	)
 }

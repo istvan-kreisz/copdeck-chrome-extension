@@ -7,9 +7,17 @@ import ItemDetail from '../../Components/ItemDetail'
 import LoadingIndicator from '../../Components/LoadingIndicator'
 import MainListItem from './MainListItem'
 import { databaseCoordinator } from '../../services/databaseCoordinator'
-import { Settings, Currency } from '../../utils/types'
+import { Currency } from '../../utils/types'
 
-const MainTab = (prop: { currency: Currency }) => {
+const MainTab = (prop: {
+	currency: Currency
+	setToastMessage: React.Dispatch<
+		React.SetStateAction<{
+			message: string
+			show: boolean
+		}>
+	>
+}) => {
 	const [searchState, setSearchState] = useState<Item[] | null | 'searching'>(null)
 	const [selectedItem, setSelectedItem] = useState<Item | null>()
 
@@ -101,6 +109,7 @@ const MainTab = (prop: { currency: Currency }) => {
 					currency={prop.currency}
 					selectedItem={selectedItem}
 					setSelectedItem={setSelectedItem}
+					setToastMessage={prop.setToastMessage}
 				></ItemDetail>
 			) : null}
 		</>

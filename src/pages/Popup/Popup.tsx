@@ -5,12 +5,17 @@ import AlertsTab from './Alerts/AlertsTab'
 import { useState, useEffect } from 'react'
 import { Currency, Settings } from '../utils/types'
 import { assert } from 'superstruct'
+import { CheckIcon } from '@heroicons/react/outline'
 import { SearchIcon, CogIcon, BellIcon, DeviceMobileIcon } from '@heroicons/react/outline'
 
 const Popup = () => {
 	// todo: set to main
 	const [activeTab, setActiveTab] = useState<'main' | 'settings' | 'alerts'>('main')
 	const [currency, setCurrency] = useState<Currency>({ code: 'EUR', symbol: '€' })
+	const [toastMessage, setToastMessage] = useState<{ message: string; show: boolean }>({
+		message: '',
+		show: false,
+	})
 
 	useEffect(() => {
 		chrome.storage.onChanged.addListener(function (changes, namespace) {
@@ -29,6 +34,22 @@ const Popup = () => {
 		})
 	}, [])
 
+	const hideToast = () => {
+		setToastMessage({ message: toastMessage?.message ?? '', show: false })
+	}
+
+	useEffect(() => {
+		let interval
+		if (toastMessage) {
+			interval = setTimeout(() => {
+				hideToast()
+			}, 2500)
+		}
+		return () => {
+			if (interval) clearTimeout(interval)
+		}
+	}, [toastMessage])
+
 	const selectedTab = (tab: 'main' | 'settings' | 'alerts') => {
 		setActiveTab(tab)
 	}
@@ -44,10 +65,14 @@ const Popup = () => {
 					<SettingsTab></SettingsTab>
 				</div>
 				<div className={`h-full ${activeTab === 'main' ? 'block' : 'hidden'}`}>
-					<MainTab currency={currency}></MainTab>
+					<MainTab setToastMessage={setToastMessage} currency={currency}></MainTab>
 				</div>
 				<div className={`h-full ${activeTab === 'alerts' ? 'block' : 'hidden'}`}>
-					<AlertsTab currency={currency} activeTab={activeTab}></AlertsTab>
+					<AlertsTab
+						setToastMessage={setToastMessage}
+						currency={currency}
+						activeTab={activeTab}
+					></AlertsTab>
 				</div>
 			</main>
 			<section className="bg-white w-full flex h-12 border-gray-400 shadow-xl">
@@ -126,6 +151,20 @@ const Popup = () => {
 					<p className="text-gray-800 font-bold">Coming soon to iOS! Click for more!</p>
 				</a>
 			</footer>
+			<div
+				onClick={hideToast}
+				className={`fixed top-3 left-3 right-3 h-10 flex items-center text-white bg-green-500 shadow-lg rounded-lg overflow-hidden mx-auto transition duration-500 ease-in-out transform ${
+					toastMessage.show
+						? 'translate-y-4 opacity-100'
+						: 'translate-y-0 opacity-0 pointer-events-none'
+				}`}
+			>
+				<CheckIcon className="ml-3 font-bold h-6 text-white flex-shrink-0"></CheckIcon>
+
+				<div className="flex items-center px-2">
+					<p className="text-white text-base">{toastMessage.message}</p>
+				</div>
+			</div>
 		</div>
 	)
 }

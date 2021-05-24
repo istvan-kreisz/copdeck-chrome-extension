@@ -40,18 +40,20 @@ const AlertListItem = ({
 				<TrashIcon className="font-bold h-5 text-white flex-shrink-0"></TrashIcon>
 			</button>
 
-			{bestPrice ? (
-				<div className="flex-shrink-0 flex flex-col justify-center items-center">
-					<p className="m-0">Best:</p>
-					<p
-						className={`text-gray-800 font-medium text-base ${
-							(bestPrice ?? 99999) < targetPrice ? 'text-green-500' : 'text-red-500'
-						}`}
-					>
-						{currency + bestPrice}
-					</p>
-				</div>
-			) : null}
+			<div className="flex-shrink-0 flex flex-col justify-center items-center">
+				<p className="m-0">Best:</p>
+				<p
+					className={`text-gray-800 font-medium text-base ${
+						bestPrice
+							? (bestPrice ?? 99999) < targetPrice
+								? 'text-green-500'
+								: 'text-red-500'
+							: ''
+					}`}
+				>
+					{bestPrice ? currency + bestPrice : '-'}
+				</p>
+			</div>
 
 			<ChevronRightIcon className="h-6 text-gray-400 flex-shrink-0"></ChevronRightIcon>
 		</ListItem>

@@ -1,6 +1,5 @@
 import React from 'react'
-import { useState, useRef, useEffect } from 'react'
-import { assert, array } from 'superstruct'
+import { useState, useEffect } from 'react'
 import { Item, PriceAlert } from 'copdeck-scraper/dist/types'
 import { itemImageURL, itemBestPrice } from 'copdeck-scraper'
 import ItemDetail from '../../Components/ItemDetail'
@@ -8,7 +7,16 @@ import AlertListItem from './AlertListItem'
 import { databaseCoordinator } from '../../services/databaseCoordinator'
 import { Currency } from '../../utils/types'
 
-const AlertsTab = (prop: { activeTab: 'main' | 'settings' | 'alerts'; currency: Currency }) => {
+const AlertsTab = (prop: {
+	activeTab: 'main' | 'settings' | 'alerts'
+	currency: Currency
+	setToastMessage: React.Dispatch<
+		React.SetStateAction<{
+			message: string
+			show: boolean
+		}>
+	>
+}) => {
 	const [priceAlerts, setPriceAlerts] = useState<[PriceAlert, Item][]>([])
 	const [selectedItem, setSelectedItem] = useState<Item | null>()
 
@@ -71,6 +79,7 @@ const AlertsTab = (prop: { activeTab: 'main' | 'settings' | 'alerts'; currency: 
 					currency={prop.currency}
 					selectedItem={selectedItem}
 					setSelectedItem={setSelectedItem}
+					setToastMessage={prop.setToastMessage}
 				></ItemDetail>
 			) : null}
 		</>
