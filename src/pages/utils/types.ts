@@ -1,10 +1,9 @@
-import { union, literal, string, number, object, optional, Infer } from 'superstruct'
-
-type Currency = { code: 'EUR'; symbol: '€' } | { code: 'USD'; symbol: '$' }
+import { string, number, object, optional, Infer } from 'superstruct'
+import { Currency } from 'copdeck-scraper/dist/types'
 
 const SettingsSchema = {
 	proxies: optional(string()),
-	currency: union([literal('EUR'), literal('USD')]),
+	currency: Currency,
 	updateInterval: number(),
 	notificationFrequency: number(),
 }
@@ -13,4 +12,4 @@ const Settings = object(SettingsSchema)
 
 type Settings = Infer<typeof Settings>
 
-export { Settings, Currency }
+export { Settings }

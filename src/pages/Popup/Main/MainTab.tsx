@@ -1,12 +1,10 @@
 import React from 'react'
 import { useState, useRef } from 'react'
 import { array, is } from 'superstruct'
-import { Item } from 'copdeck-scraper/dist/types'
-import { itemImageURL } from 'copdeck-scraper'
 import ItemDetail from '../../Components/ItemDetail'
 import LoadingIndicator from '../../Components/LoadingIndicator'
 import MainListItem from './MainListItem'
-import { Currency } from '../../utils/types'
+import { Item, Currency } from 'copdeck-scraper/dist/types'
 
 const MainTab = (prop: {
 	currency: Currency
@@ -83,7 +81,8 @@ const MainTab = (prop: {
 								return (
 									<MainListItem
 										name={item.name}
-										imageURL={itemImageURL(item)}
+										imageURL={item.imageURL?.url}
+										flipImage={item.imageURL?.store.id === 'klekt'}
 										currency={'USD'}
 										id={item.id}
 										onClicked={clickedItem.bind(null, item)}

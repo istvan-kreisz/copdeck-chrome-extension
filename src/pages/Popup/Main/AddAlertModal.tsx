@@ -1,10 +1,9 @@
 import React from 'react'
 import { useRef, useState } from 'react'
-import { Item, StorePrices, PriceAlert } from 'copdeck-scraper/dist/types'
+import { Item, StorePrices, PriceAlert, Currency } from 'copdeck-scraper/dist/types'
 import { v4 as uuidv4 } from 'uuid'
 import { databaseCoordinator } from '../../services/databaseCoordinator'
 import Popup from '../../Components/Popup'
-import { Currency } from '../../utils/types'
 
 const AddAlertModal = (prop: {
 	selectedItem: Item

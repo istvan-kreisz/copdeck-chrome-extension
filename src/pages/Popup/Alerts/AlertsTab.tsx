@@ -1,11 +1,10 @@
 import React from 'react'
 import { useState, useEffect } from 'react'
-import { Item, PriceAlert } from 'copdeck-scraper/dist/types'
-import { itemImageURL, itemBestPrice } from 'copdeck-scraper'
+import { Item, PriceAlert, Currency } from 'copdeck-scraper/dist/types'
+import { itemBestPrice } from 'copdeck-scraper'
 import ItemDetail from '../../Components/ItemDetail'
 import AlertListItem from './AlertListItem'
 import { databaseCoordinator } from '../../services/databaseCoordinator'
-import { Currency } from '../../utils/types'
 
 const AlertsTab = (prop: {
 	activeTab: 'main' | 'settings' | 'alerts'
@@ -55,7 +54,8 @@ const AlertsTab = (prop: {
 						return (
 							<AlertListItem
 								name={item.name}
-								imageURL={itemImageURL(item)}
+								imageURL={item.imageURL?.url}
+								flipImage={item.imageURL?.store.id === 'klekt'}
 								id={alert.id}
 								onClicked={clickedItem.bind(null, item)}
 								stores={alert.stores.map((s) => s.name)}

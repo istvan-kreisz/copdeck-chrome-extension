@@ -1,13 +1,14 @@
-import { array, assert, is, number } from 'superstruct'
-import { Item, PriceAlert } from 'copdeck-scraper/dist/types'
+import { array, assert, boolean, is, number } from 'superstruct'
+import { Item, PriceAlert, EUR } from 'copdeck-scraper/dist/types'
 import { removeDuplicates } from 'copdeck-scraper'
 import { Settings } from '../utils/types'
+import { log } from '../utils/logger'
 
 type AlertWithItem = [PriceAlert, Item]
 
 export const databaseCoordinator = () => {
 	const defaultSettings: Settings = {
-		currency: 'EUR',
+		currency: EUR,
 		updateInterval: 30,
 		notificationFrequency: 24,
 		proxies: undefined,
@@ -15,7 +16,7 @@ export const databaseCoordinator = () => {
 
 	const asyncSet = async (
 		key: string,
-		value: object
+		value: any
 	): Promise<chrome.runtime.LastError | undefined> => {
 		return new Promise((resolve, reject) => {
 			chrome.storage.local.set({ [key]: value }, () => {
@@ -30,6 +31,22 @@ export const databaseCoordinator = () => {
 				resolve(result)
 			})
 		})
+	}
+
+	const getIsDevelopment = async (): Promise<boolean> => {
+		const result = await asyncGet('isDevelopment')
+		const isDevelopment = result.isDevelopment
+		if (is(isDevelopment, boolean())) {
+			return isDevelopment
+		} else {
+			return new Promise<boolean>((resolve, reject) => {
+				chrome.management.getSelf(async (info) => {
+					const isDevelopment = info?.installType === 'development'
+					await saveIsDevelopment(isDevelopment)
+					resolve(isDevelopment)
+				})
+			})
+		}
 	}
 
 	const getCachedItemWithId = async (id: string): Promise<Item | undefined> => {
@@ -51,7 +68,7 @@ export const databaseCoordinator = () => {
 	const getItemWithId = async (id: string): Promise<Item | undefined> => {
 		try {
 			const item = await getSavedItemWithId(id)
-			return item ?? (await getSavedItemWithId(id))
+			return item ?? (await getCachedItemWithId(id))
 		} catch (err) {
 			return getCachedItemWithId(id)
 		}
@@ -176,14 +193,20 @@ export const databaseCoordinator = () => {
 		}
 	}
 
-	const updateItem = async (item: Item): Promise<void> => {
+	const updateItem = async (item: Item, isLoggingEnabled: boolean): Promise<void> => {
 		try {
 			if (await getSavedItemWithId(item.id)) {
+				log('saving item', isLoggingEnabled)
+				log(item, isLoggingEnabled)
 				saveItem(item)
 			} else {
+				log('caching item', isLoggingEnabled)
+				log(item, isLoggingEnabled)
 				cacheItem(item)
 			}
 		} catch (err) {
+			log('caching item', isLoggingEnabled)
+			log(item, isLoggingEnabled)
 			cacheItem(item)
 		}
 	}
@@ -196,6 +219,10 @@ export const databaseCoordinator = () => {
 
 	const saveSettings = async (settings: Settings) => {
 		asyncSet('settings', settings)
+	}
+
+	const saveIsDevelopment = async (isDevelopment: boolean) => {
+		asyncSet('isDevelopment', isDevelopment)
 	}
 
 	const deleteItemWithId = async (itemId: string) => {
@@ -237,6 +264,7 @@ export const databaseCoordinator = () => {
 		getItemWithId: getItemWithId,
 		getAlerts: getAlerts,
 		getSettings: getSettings,
+		getIsDevelopment: getIsDevelopment,
 		listenToSettingsChanges: listenToSettingsChanges,
 		updateItem: updateItem,
 		saveItems: saveItems,

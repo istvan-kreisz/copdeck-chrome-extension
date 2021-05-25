@@ -3,14 +3,14 @@ import MainTab from './Main/MainTab'
 import SettingsTab from './Settings/SettingsTab'
 import AlertsTab from './Alerts/AlertsTab'
 import { useState, useEffect } from 'react'
-import { Currency } from '../utils/types'
 import { CheckIcon } from '@heroicons/react/outline'
 import { SearchIcon, CogIcon, BellIcon, DeviceMobileIcon } from '@heroicons/react/outline'
 import { databaseCoordinator } from '../services/databaseCoordinator'
+import { Currency, EUR, USD } from 'copdeck-scraper/dist/types'
 
 const Popup = () => {
 	const [activeTab, setActiveTab] = useState<'main' | 'settings' | 'alerts'>('main')
-	const [currency, setCurrency] = useState<Currency>({ code: 'EUR', symbol: '€' })
+	const [currency, setCurrency] = useState<Currency>(EUR)
 	const [toastMessage, setToastMessage] = useState<{ message: string; show: boolean }>({
 		message: '',
 		show: false,
@@ -21,14 +21,7 @@ const Popup = () => {
 	useEffect(() => {
 		;(async () => {
 			await listenToSettingsChanges((settings) => {
-				setCurrency(
-					settings.currency === 'EUR'
-						? {
-								code: settings.currency,
-								symbol: '€',
-						  }
-						: { code: settings.currency, symbol: '$' }
-				)
+				setCurrency(settings.currency)
 			})
 		})()
 		chrome.runtime.sendMessage({ refresh: true })

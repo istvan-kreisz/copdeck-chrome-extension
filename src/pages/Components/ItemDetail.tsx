@@ -1,11 +1,10 @@
 import React from 'react'
 import { useEffect, useState, useRef } from 'react'
 import { assert } from 'superstruct'
-import { Item, Store, STOCKX, KLEKT, StoreId } from 'copdeck-scraper/dist/types'
-import { itemImageURL, bestStoreInfo } from 'copdeck-scraper'
+import { Item, Store, STOCKX, KLEKT, StoreId, Currency } from 'copdeck-scraper/dist/types'
+import { bestStoreInfo } from 'copdeck-scraper'
 import AddAlertModal from '../Popup/Main/AddAlertModal'
 import { ChevronLeftIcon } from '@heroicons/react/outline'
-import { Currency } from '../utils/types'
 import LoadingIndicator from '../Components/LoadingIndicator'
 
 const ItemDetail = (prop: {
@@ -99,7 +98,12 @@ const ItemDetail = (prop: {
 				<section className="relative bg-white w-screen h-48 ">
 					<img
 						className="w-48 h-full object-contain mx-auto"
-						src={itemImageURL(prop.selectedItem)}
+						src={prop.selectedItem.imageURL?.url}
+						style={
+							prop.selectedItem.imageURL?.store.id === 'klekt'
+								? { transform: 'scaleX(-1)' }
+								: {}
+						}
 						alt=""
 					/>
 					<button

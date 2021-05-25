@@ -13,10 +13,16 @@ const AlertListItem = ({
 	targetPrice,
 	stores,
 	onDeleted,
+	flipImage,
 }) => {
 	return (
 		<ListItem id={id} className="cursor-pointer" onClicked={onClicked}>
-			<img className="flex-shrink-0 h-10 w-10 object-contain" src={imageURL} alt="" />
+			<img
+				style={flipImage ? { transform: 'scaleX(-1)' } : {}}
+				className="flex-shrink-0 h-10 w-10 object-contain"
+				src={imageURL}
+				alt=""
+			/>
 			<div className="flex flex-col justify-start space-y-1">
 				<p className="text-gray-800 font-medium flex-shrink line-clamp-2">{name}</p>
 				<div className="flex space-x-1">

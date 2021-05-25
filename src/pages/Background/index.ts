@@ -3,13 +3,14 @@ import {
 	promiseAllSkippingErrors,
 	isOlderThan,
 	itemBestPrice,
-	config,
+	didFailToFetchAllStorePrices,
 } from 'copdeck-scraper'
 import { assert, string, is } from 'superstruct'
 import { Item, ALLSTORES } from 'copdeck-scraper/dist/types'
 import { databaseCoordinator } from '../services/databaseCoordinator'
 import { Settings } from '../utils/types'
 import { parse, stringify } from '../utils/proxyparser'
+import { log } from '../utils/logger'
 
 const minUpdateInterval = 5
 const maxUpdateInterval = 1440
@@ -22,17 +23,26 @@ const clearCache = async () => {
 	try {
 		await clearItemCache()
 	} catch (err) {
-		console.log(err)
+		log(err, true)
 	}
 }
 
+const shouldUpdateItem = (item: Item, updateInterval: number): boolean => {
+	const lastUpdated = item.updated
+	return (!!lastUpdated && isOlderThan(lastUpdated, updateInterval, 'minutes')) || !lastUpdated
+}
+
 const updatePrices = async (forced: boolean = false) => {
-	const { getItems, saveItems, getAlerts, updateItems, getSettings } = databaseCoordinator()
+	const { getItems, saveItems, getAlerts, updateItems, getSettings, getIsDevelopment } =
+		databaseCoordinator()
 
 	try {
-		const settings = await getSettings()
-		const savedAlerts = await getAlerts()
-		const savedItems = await getItems()
+		const [settings, savedAlerts, savedItems, dev] = await Promise.all([
+			getSettings(),
+			getAlerts(),
+			getItems(),
+			getIsDevelopment(),
+		])
 
 		// delete items without alerts
 		const activeItems = savedItems.filter((item) =>
@@ -46,16 +56,12 @@ const updatePrices = async (forced: boolean = false) => {
 		const result = await promiseAllSkippingErrors(
 			activeItems.map((item) => {
 				const lastUpdated = item.updated
-				if (
-					forced ||
-					(lastUpdated && isOlderThan(lastUpdated, settings.updateInterval, 'minutes')) ||
-					!lastUpdated
-				) {
+				if (forced || shouldUpdateItem(item, settings.updateInterval)) {
 					return new Promise<Item>((resolve, reject) => {
 						const delay = Math.random() * requestDelayMax
 						setTimeout(() => {
 							browserAPI
-								.getItemPrices(item)
+								.getItemPrices(item, settings.currency, dev)
 								.then((result) => {
 									resolve(result)
 								})
@@ -80,27 +86,40 @@ const updatePrices = async (forced: boolean = false) => {
 }
 
 const fetchAndSave = async (item: Item) => {
-	const { updateItem } = databaseCoordinator()
-	const newItem = await browserAPI.getItemPrices(item)
-	await updateItem(newItem)
+	const { updateItem, getSettings, getIsDevelopment } = databaseCoordinator()
+	const [settings, dev] = await Promise.all([getSettings(), getIsDevelopment()])
+	const newItem = await browserAPI.getItemPrices(item, settings.currency, dev)
+	await updateItem(newItem, dev)
 	return newItem
 }
 
 const getItemDetails = async (item: Item) => {
-	const { getItemWithId } = databaseCoordinator()
+	const { getItemWithId, getIsDevelopment, getSettings } = databaseCoordinator()
 
 	try {
-		const savedItem = await getItemWithId(item.id)
+		const [savedItem, dev, settings] = await Promise.all([
+			getItemWithId(item.id),
+			getIsDevelopment(),
+			getSettings(),
+		])
+
 		if (savedItem) {
-			if (savedItem.storeInfo.length < ALLSTORES.length) {
-				return fetchAndSave(item)
+			if (
+				didFailToFetchAllStorePrices(savedItem) ||
+				shouldUpdateItem(savedItem, settings.updateInterval)
+			) {
+				log('fetching new 1', dev)
+				return fetchAndSave(savedItem)
 			} else {
+				log('returning saved', dev)
 				return savedItem
 			}
 		} else {
+			log('fetching new 2', dev)
 			return fetchAndSave(item)
 		}
 	} catch (err) {
+		log('fetching new 3', true)
 		return fetchAndSave(item)
 	}
 }
@@ -109,10 +128,12 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 	if (msg.search) {
 		;(async () => {
 			try {
-				console.log('searching')
 				const searchTerm = msg.search
 				assert(searchTerm, string())
-				const items = await browserAPI.searchItems(searchTerm)
+				const { getSettings, getIsDevelopment } = databaseCoordinator()
+				const [settings, dev] = await Promise.all([getSettings(), getIsDevelopment()])
+				log('searching', dev)
+				const items = await browserAPI.searchItems(searchTerm, settings.currency, dev)
 				sendResponse(items)
 			} catch (err) {
 				sendResponse([])
@@ -301,23 +322,26 @@ chrome.runtime.onStartup.addListener(async () => {
 })
 
 chrome.runtime.onInstalled.addListener(async () => {
-	await addRefreshAlarm(false)
-	await addClearCacheAlarm()
+	await Promise.all([addRefreshAlarm(false), addClearCacheAlarm()])
 })
 
 chrome.storage.onChanged.addListener(async function (changes, namespace) {
-	// 	for (let [key, { oldValue, newValue }] of Object.entries(changes)) {
-	// 		console.log(
-	// 			`Storage key "${key}" in namespace "${namespace}" changed.`,
-	// 			`Old value was "${oldValue}", new value is "${newValue}".`
-	// 		)
-	// 	}
+	const { getIsDevelopment } = databaseCoordinator()
+	const dev = await getIsDevelopment()
+
+	if (dev) {
+		for (let [key, { oldValue, newValue }] of Object.entries(changes)) {
+			console.log(
+				`Storage key "${key}" in namespace "${namespace}" changed.`,
+				`Old value was "${oldValue}", new value is "${newValue}".`
+			)
+		}
+	}
 
 	const settingsNew = changes.settings?.newValue
 	const settingsOld = changes.settings?.oldValue
 	if (settingsNew && settingsOld && is(settingsNew, Settings) && is(settingsOld, Settings)) {
 		if (settingsOld.currency !== settingsNew.currency) {
-			config.currency = settingsNew.currency
 			await updatePrices(true)
 		}
 		if (settingsOld.updateInterval !== settingsNew.updateInterval) {
@@ -326,11 +350,10 @@ chrome.storage.onChanged.addListener(async function (changes, namespace) {
 	}
 })
 
+// run audit
+// key errors
 // test refresh
-// fix search issue
 // todo: add goat
-// mirror images from klekt
-// fix caching issue - update when new data is added
 // todo: check uninstall survey
 // todo: add logo
 // add telltips in settings

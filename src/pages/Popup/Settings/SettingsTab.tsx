@@ -1,6 +1,6 @@
 import React from 'react'
 import { useState, useRef, useEffect } from 'react'
-import { Currency } from '../../utils/types'
+import { Currency, CurrencyCode, ALLCURRENCIES, EUR } from 'copdeck-scraper/dist/types'
 import { databaseCoordinator } from '../../services/databaseCoordinator'
 import { QuestionMarkCircleIcon } from '@heroicons/react/solid'
 import Popup from '../../Components/Popup'
@@ -13,14 +13,12 @@ const SettingsTab = (prop: {
 		}>
 	>
 }) => {
-	const currencies = ['EUR', 'USD']
-
 	const proxyTextField = useRef<HTMLTextAreaElement>(null)
 	const currencySelector = useRef<HTMLDivElement>(null)
 
 	const [updateInterval, setUpdateInterval] = useState('5')
 	const [notificationFrequency, setNotificationFrequency] = useState('24')
-	const [selectedCurrency, setSelectedCurrency] = useState<Currency['code']>('EUR')
+	const [selectedCurrency, setSelectedCurrency] = useState<CurrencyCode>(EUR.code)
 	const [telltipMessage, setTelltipMessage] = useState<{
 		title: string
 		message: string
@@ -36,7 +34,7 @@ const SettingsTab = (prop: {
 	useEffect(() => {
 		;(async () => {
 			await listenToSettingsChanges((settings) => {
-				setSelectedCurrency(settings.currency)
+				setSelectedCurrency(settings.currency.code)
 
 				const proxyField = proxyTextField.current
 				if (proxyField) {
@@ -99,7 +97,7 @@ const SettingsTab = (prop: {
 					<h3 className="text-base font-bold mt-0 mb-1">Currency</h3>
 
 					<div className="flex flex-row space-x-2 items-start" ref={currencySelector}>
-						{currencies.map((currency) => {
+						{ALLCURRENCIES.map((currency) => currency.code).map((currency) => {
 							return (
 								<div
 									key={currency}
