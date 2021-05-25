@@ -1,15 +1,27 @@
-import { string, number, object, optional, Infer } from 'superstruct'
+import { string, number, object, optional, Infer, array } from 'superstruct'
 import { Currency } from 'copdeck-scraper/dist/types'
 
-const SettingsSchema = {
-	proxies: optional(string()),
+const Proxy = object({
+	host: string(),
+	port: number(),
+	protocol: string(),
+	auth: optional(
+		object({
+			username: string(),
+			password: string(),
+		})
+	),
+})
+
+type Proxy = Infer<typeof Proxy>
+
+const Settings = object({
+	proxies: array(Proxy),
 	currency: Currency,
 	updateInterval: number(),
 	notificationFrequency: number(),
-}
-
-const Settings = object(SettingsSchema)
+})
 
 type Settings = Infer<typeof Settings>
 
-export { Settings }
+export { Settings, Proxy }

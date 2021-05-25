@@ -4,6 +4,7 @@ import { Currency, CurrencyCode, ALLCURRENCIES, EUR } from 'copdeck-scraper/dist
 import { databaseCoordinator } from '../../services/databaseCoordinator'
 import { QuestionMarkCircleIcon } from '@heroicons/react/solid'
 import Popup from '../../Components/Popup'
+import { stringify } from '../../utils/proxyparser'
 
 const SettingsTab = (prop: {
 	setToastMessage: React.Dispatch<
@@ -18,7 +19,7 @@ const SettingsTab = (prop: {
 
 	const [updateInterval, setUpdateInterval] = useState('5')
 	const [notificationFrequency, setNotificationFrequency] = useState('24')
-	const [selectedCurrency, setSelectedCurrency] = useState<CurrencyCode>(EUR.code)
+	const [selectedCurrency, setSelectedCurrency] = useState<Currency>(EUR)
 	const [telltipMessage, setTelltipMessage] = useState<{
 		title: string
 		message: string
@@ -34,11 +35,11 @@ const SettingsTab = (prop: {
 	useEffect(() => {
 		;(async () => {
 			await listenToSettingsChanges((settings) => {
-				setSelectedCurrency(settings.currency.code)
+				setSelectedCurrency(settings.currency)
 
 				const proxyField = proxyTextField.current
 				if (proxyField) {
-					proxyField.value = settings.proxies ?? ''
+					proxyField.value = stringify(settings.proxies)
 				}
 
 				setNotificationFrequency(`${settings.notificationFrequency}`)
@@ -56,14 +57,23 @@ const SettingsTab = (prop: {
 		chrome.runtime.sendMessage(
 			{
 				settings: {
-					proxies: proxyTextField.current?.value,
-					currency: selectedCurrency,
-					updateInterval: interval,
-					notificationFrequency: notificationInterval,
+					settings: {
+						proxies: [],
+						currency: selectedCurrency,
+						updateInterval: interval,
+						notificationFrequency: notificationInterval,
+					},
+					proxyString: proxyTextField.current?.value ?? '',
 				},
 			},
 			(response) => {
-				if (response === true) {
+				if (response) {
+					setTelltipMessage({
+						title: 'Invalid proxy format',
+						message: response,
+						show: true,
+					})
+				} else {
 					prop.setToastMessage({ message: 'Settings saved', show: true })
 				}
 			}
@@ -79,7 +89,11 @@ const SettingsTab = (prop: {
 	}
 
 	const changedCurrency = (event: { target: HTMLInputElement }) => {
-		setSelectedCurrency(event.target.value as Currency['code'])
+		const currencyCode = event.target.value as Currency['code']
+		const currency = ALLCURRENCIES.find((c) => c.code === currencyCode)
+		if (currency) {
+			setSelectedCurrency(currency)
+		}
 	}
 
 	const clickedContact = () => {
@@ -112,7 +126,7 @@ const SettingsTab = (prop: {
 										id={currency}
 										name="currency"
 										value={currency}
-										checked={currency === selectedCurrency}
+										checked={currency === selectedCurrency.code}
 										onChange={changedCurrency}
 										className="h-5 w-5 text-theme-blue rounded-full m-0"
 									/>

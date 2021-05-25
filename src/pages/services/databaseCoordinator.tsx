@@ -11,7 +11,7 @@ export const databaseCoordinator = () => {
 		currency: EUR,
 		updateInterval: 30,
 		notificationFrequency: 24,
-		proxies: undefined,
+		proxies: [],
 	}
 
 	const asyncSet = async (

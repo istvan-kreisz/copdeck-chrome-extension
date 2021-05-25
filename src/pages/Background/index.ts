@@ -6,7 +6,7 @@ import {
 	didFailToFetchAllStorePrices,
 } from 'copdeck-scraper'
 import { assert, string, is, boolean } from 'superstruct'
-import { Item, ALLSTORES } from 'copdeck-scraper/dist/types'
+import { Item } from 'copdeck-scraper/dist/types'
 import { databaseCoordinator } from '../services/databaseCoordinator'
 import { Settings } from '../utils/types'
 import { parse, stringify } from '../utils/proxyparser'
@@ -158,32 +158,36 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 		})()
 		return true
 	} else if (msg.settings) {
-		const { saveSettings } = databaseCoordinator()
+		const { saveSettings, getIsDevelopment } = databaseCoordinator()
 		;(async () => {
 			try {
-				const item = msg.settings
-				assert(item, Settings)
+				const settings = msg.settings.settings
+				const proxyString = msg.settings.proxyString
+				assert(settings, Settings)
+				assert(proxyString, string())
+				const dev = await getIsDevelopment()
 
-				let proxiesString = item.proxies
-				if (proxiesString) {
+				let proxyParseError
+				if (proxyString) {
 					try {
-						proxiesString = stringify(parse(proxiesString))
+						settings.proxies = parse(proxyString)
 					} catch (err) {
-						proxiesString = undefined
-						console.log(err)
+						settings.proxies = []
+						proxyParseError = err['message'] ?? 'Invalid proxy format'
+						log('proxy error', dev)
+						log(err, dev)
 					}
 				}
-				item.proxies = proxiesString
-				if (item.updateInterval < minUpdateInterval) {
-					item.updateInterval = minUpdateInterval
-				} else if (item.updateInterval > maxUpdateInterval) {
-					item.updateInterval = maxUpdateInterval
+				if (settings.updateInterval < minUpdateInterval) {
+					settings.updateInterval = minUpdateInterval
+				} else if (settings.updateInterval > maxUpdateInterval) {
+					settings.updateInterval = maxUpdateInterval
 				}
-				saveSettings(item)
-				sendResponse(true)
+				await saveSettings(settings)
+				sendResponse(proxyParseError)
 			} catch (err) {
 				console.log(err)
-				sendResponse(false)
+				sendResponse(err)
 			}
 		})()
 		return true
@@ -356,6 +360,7 @@ chrome.storage.onChanged.addListener(async function (changes, namespace) {
 // todo: run audit
 
 // investigate timeout errors
+// add vpn tip
 // todo: add goat
 // adjust height
 // todo: check uninstall survey
