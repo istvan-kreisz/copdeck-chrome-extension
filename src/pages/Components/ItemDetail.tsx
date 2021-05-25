@@ -172,7 +172,10 @@ const ItemDetail = (prop: {
 						</li>
 						<div className="mt-6 ml-4">
 							{isLoadingPrices && !prop.selectedItem.storePrices.length ? (
-								<LoadingIndicator title="Loading Prices"></LoadingIndicator>
+								<LoadingIndicator
+									key="loading"
+									title="Loading Prices"
+								></LoadingIndicator>
 							) : null}
 						</div>
 

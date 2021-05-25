@@ -6,7 +6,7 @@ import {
 	config,
 } from 'copdeck-scraper'
 import { assert, string, is } from 'superstruct'
-import { Item } from 'copdeck-scraper/dist/types'
+import { Item, ALLSTORES } from 'copdeck-scraper/dist/types'
 import { databaseCoordinator } from '../services/databaseCoordinator'
 import { Settings } from '../utils/types'
 import { parse, stringify } from '../utils/proxyparser'
@@ -79,10 +79,10 @@ const updatePrices = async (forced: boolean = false) => {
 	}
 }
 
-const fetchAndCache = async (item: Item) => {
-	const { cacheItem } = databaseCoordinator()
+const fetchAndSave = async (item: Item) => {
+	const { updateItem } = databaseCoordinator()
 	const newItem = await browserAPI.getItemPrices(item)
-	await cacheItem(newItem)
+	await updateItem(newItem)
 	return newItem
 }
 
@@ -92,13 +92,16 @@ const getItemDetails = async (item: Item) => {
 	try {
 		const savedItem = await getItemWithId(item.id)
 		if (savedItem) {
-			console.log(savedItem)
-			return savedItem
+			if (savedItem.storeInfo.length < ALLSTORES.length) {
+				return fetchAndSave(item)
+			} else {
+				return savedItem
+			}
 		} else {
-			return fetchAndCache(item)
+			return fetchAndSave(item)
 		}
 	} catch (err) {
-		return fetchAndCache(item)
+		return fetchAndSave(item)
 	}
 }
 
@@ -248,7 +251,7 @@ const sendNotifications = async () => {
 			})
 			.filter(([alert, item]) => {
 				const bestPrice = itemBestPrice(item, alert)
-				console.log(bestPrice, alert.targetPrice)
+
 				if (bestPrice) {
 					if (bestPrice < alert.targetPrice) {
 						return true
@@ -323,11 +326,17 @@ chrome.storage.onChanged.addListener(async function (changes, namespace) {
 	}
 })
 
+// test refresh
+// fix search issue
 // todo: add goat
+// mirror images from klekt
+// fix caching issue - update when new data is added
 // todo: check uninstall survey
 // todo: add logo
+// add telltips in settings
 // todo: add warning about ip usage
 // todo: add proxy support
 // todo: why does communication keep breaking
 // todo: useragents
-// todo: test notifications
+// todo: fix notifications
+// test notification refresh

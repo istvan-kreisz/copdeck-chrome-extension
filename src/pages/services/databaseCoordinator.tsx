@@ -13,10 +13,13 @@ export const databaseCoordinator = () => {
 		proxies: undefined,
 	}
 
-	const asyncSet = async (key: string, value: object): Promise<void> => {
+	const asyncSet = async (
+		key: string,
+		value: object
+	): Promise<chrome.runtime.LastError | undefined> => {
 		return new Promise((resolve, reject) => {
 			chrome.storage.local.set({ [key]: value }, () => {
-				resolve()
+				resolve(chrome.runtime.lastError)
 			})
 		})
 	}
@@ -37,17 +40,19 @@ export const databaseCoordinator = () => {
 		}
 	}
 
-	const getItemWithId = async (id: string): Promise<Item | undefined> => {
+	const getSavedItemWithId = async (id: string): Promise<Item | undefined> => {
 		const result = await asyncGet('items')
 		const items = result.items
 		if (is(items, array(Item))) {
-			const item = items.find((item) => item.id == id)
-			if (item) {
-				return item
-			} else {
-				return getCachedItemWithId(id)
-			}
-		} else {
+			return items.find((item) => item.id == id)
+		}
+	}
+
+	const getItemWithId = async (id: string): Promise<Item | undefined> => {
+		try {
+			const item = await getSavedItemWithId(id)
+			return item ?? (await getSavedItemWithId(id))
+		} catch (err) {
 			return getCachedItemWithId(id)
 		}
 	}
@@ -128,6 +133,14 @@ export const databaseCoordinator = () => {
 		await saveItems(newItems)
 	}
 
+	const setCache = async (items: Item[]) => {
+		const result = await asyncSet('cachedItems', items)
+		if (result) {
+			await clearItemCache()
+			await asyncSet('cachedItems', items)
+		}
+	}
+
 	const cacheItem = async (item: Item) => {
 		const result = await asyncGet('cachedItems')
 		const cachedItems = result.cachedItems
@@ -135,10 +148,10 @@ export const databaseCoordinator = () => {
 			const newItems = cachedItems.filter((i) => item.id !== i.id)
 			item.updated = new Date().getTime()
 			newItems.push(item)
-			await asyncSet('cachedItems', newItems)
+			await setCache(newItems)
 		} else {
 			item.updated = new Date().getTime()
-			await asyncSet('cachedItems', [item])
+			await setCache([item])
 		}
 	}
 
@@ -163,6 +176,18 @@ export const databaseCoordinator = () => {
 		}
 	}
 
+	const updateItem = async (item: Item): Promise<void> => {
+		try {
+			if (await getSavedItemWithId(item.id)) {
+				saveItem(item)
+			} else {
+				cacheItem(item)
+			}
+		} catch (err) {
+			cacheItem(item)
+		}
+	}
+
 	const saveAlert = async (alert: PriceAlert, item: Item) => {
 		const alerts = await getAlerts()
 		await asyncSet('alerts', [...alerts, alert])
@@ -171,14 +196,6 @@ export const databaseCoordinator = () => {
 
 	const saveSettings = async (settings: Settings) => {
 		asyncSet('settings', settings)
-	}
-
-	const deleteItem = async (item: Item) => {
-		const items = await getItems()
-		const newItems = items.filter((i) => item.id !== i.id)
-		if (newItems.length !== items.length) {
-			saveItems(newItems)
-		}
 	}
 
 	const deleteItemWithId = async (itemId: string) => {
@@ -221,8 +238,7 @@ export const databaseCoordinator = () => {
 		getAlerts: getAlerts,
 		getSettings: getSettings,
 		listenToSettingsChanges: listenToSettingsChanges,
-		saveItem: saveItem,
-		cacheItem: cacheItem,
+		updateItem: updateItem,
 		saveItems: saveItems,
 		updateItems: updateItems,
 		saveAlert: saveAlert,

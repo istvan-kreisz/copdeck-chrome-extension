@@ -1,12 +1,11 @@
 import React from 'react'
-import { useState, useRef, useEffect } from 'react'
-import { array, assert, is } from 'superstruct'
+import { useState, useRef } from 'react'
+import { array, is } from 'superstruct'
 import { Item } from 'copdeck-scraper/dist/types'
 import { itemImageURL } from 'copdeck-scraper'
 import ItemDetail from '../../Components/ItemDetail'
 import LoadingIndicator from '../../Components/LoadingIndicator'
 import MainListItem from './MainListItem'
-import { databaseCoordinator } from '../../services/databaseCoordinator'
 import { Currency } from '../../utils/types'
 
 const MainTab = (prop: {
@@ -28,7 +27,6 @@ const MainTab = (prop: {
 		if (searchBar.current?.value) {
 			chrome.runtime.sendMessage({ search: searchBar.current?.value }, (response) => {
 				if (is(response, array(Item))) {
-					console.log(response)
 					if (response.length) {
 						setSearchState(response)
 					} else {
@@ -73,12 +71,12 @@ const MainTab = (prop: {
 				</div>
 				<ul className="my-4 flex flex-col space-y-3">
 					{searchState === 'searching' ? (
-						<LoadingIndicator title="Loading"></LoadingIndicator>
+						<LoadingIndicator key="loading" title="Loading"></LoadingIndicator>
 					) : null}
 					{typeof searchState === 'object' &&
 					searchState &&
 					searchState['length'] === 0 ? (
-						<p>No Results</p>
+						<p key="noresults">No Results</p>
 					) : null}
 					{typeof searchState === 'object'
 						? (searchState as Item[])?.map((item, index) => {
