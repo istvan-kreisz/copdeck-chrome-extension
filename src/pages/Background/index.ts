@@ -5,7 +5,7 @@ import {
 	itemBestPrice,
 	didFailToFetchAllStorePrices,
 } from 'copdeck-scraper'
-import { assert, string, is } from 'superstruct'
+import { assert, string, is, boolean } from 'superstruct'
 import { Item, ALLSTORES } from 'copdeck-scraper/dist/types'
 import { databaseCoordinator } from '../services/databaseCoordinator'
 import { Settings } from '../utils/types'
@@ -93,7 +93,7 @@ const fetchAndSave = async (item: Item) => {
 	return newItem
 }
 
-const getItemDetails = async (item: Item) => {
+const getItemDetails = async (item: Item, forceRefresh: boolean) => {
 	const { getItemWithId, getIsDevelopment, getSettings } = databaseCoordinator()
 
 	try {
@@ -106,7 +106,8 @@ const getItemDetails = async (item: Item) => {
 		if (savedItem) {
 			if (
 				didFailToFetchAllStorePrices(savedItem) ||
-				shouldUpdateItem(savedItem, settings.updateInterval)
+				shouldUpdateItem(savedItem, settings.updateInterval) ||
+				forceRefresh
 			) {
 				log('fetching new 1', dev)
 				return fetchAndSave(savedItem)
@@ -144,9 +145,11 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 	} else if (msg.getItemDetails) {
 		;(async () => {
 			try {
-				const item = msg.getItemDetails
+				const item = msg.getItemDetails?.item
+				const forceRefresh = msg.getItemDetails?.forceRefresh
 				assert(item, Item)
-				const itemWithPrices = await getItemDetails(item)
+				assert(forceRefresh, boolean())
+				const itemWithPrices = await getItemDetails(item, forceRefresh)
 				sendResponse(itemWithPrices)
 			} catch (err) {
 				sendResponse(undefined)
@@ -351,6 +354,7 @@ chrome.storage.onChanged.addListener(async function (changes, namespace) {
 })
 
 // run audit
+// add force refresh to item detail
 // key errors
 // test refresh
 // todo: add goat

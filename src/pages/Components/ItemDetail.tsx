@@ -30,15 +30,18 @@ const ItemDetail = (prop: {
 		didClickBack.current = false
 		if (prop.selectedItem && prop.selectedItem.storePrices.length == 0) {
 			setIsLoadingPrices(true)
-			chrome.runtime.sendMessage({ getItemDetails: prop.selectedItem }, (item) => {
-				try {
-					assert(item, Item)
-					if (!didClickBack.current) {
-						prop.setSelectedItem((current) => (current ? item : null))
-					}
-				} catch {}
-				setIsLoadingPrices(false)
-			})
+			chrome.runtime.sendMessage(
+				{ getItemDetails: { item: prop.selectedItem, forceRefresh: false } },
+				(item) => {
+					try {
+						assert(item, Item)
+						if (!didClickBack.current) {
+							prop.setSelectedItem((current) => (current ? item : null))
+						}
+					} catch {}
+					setIsLoadingPrices(false)
+				}
+			)
 		}
 	}, [])
 
