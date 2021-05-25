@@ -9,7 +9,7 @@ import { assert, string, is, boolean } from 'superstruct'
 import { Item } from 'copdeck-scraper/dist/types'
 import { databaseCoordinator } from '../services/databaseCoordinator'
 import { Settings } from '../utils/types'
-import { parse, stringify } from '../utils/proxyparser'
+import { parse } from '../utils/proxyparser'
 import { log } from '../utils/logger'
 
 const minUpdateInterval = 5
@@ -33,6 +33,7 @@ const shouldUpdateItem = (item: Item, updateInterval: number): boolean => {
 }
 
 const updatePrices = async (forced: boolean = false) => {
+	return
 	const { getItems, saveItems, getAlerts, updateItems, getSettings, getIsDevelopment } =
 		databaseCoordinator()
 
@@ -348,7 +349,7 @@ chrome.storage.onChanged.addListener(async function (changes, namespace) {
 	const settingsNew = changes.settings?.newValue
 	const settingsOld = changes.settings?.oldValue
 	if (settingsNew && settingsOld && is(settingsNew, Settings) && is(settingsOld, Settings)) {
-		if (settingsOld.currency !== settingsNew.currency) {
+		if (settingsOld.currency.code !== settingsNew.currency.code) {
 			await updatePrices(true)
 		}
 		if (settingsOld.updateInterval !== settingsNew.updateInterval) {
@@ -357,10 +358,8 @@ chrome.storage.onChanged.addListener(async function (changes, namespace) {
 	}
 })
 
-// todo: run audit
-
 // investigate timeout errors
-// add vpn tip
+// fic images not loading
 // todo: add goat
 // adjust height
 // todo: check uninstall survey

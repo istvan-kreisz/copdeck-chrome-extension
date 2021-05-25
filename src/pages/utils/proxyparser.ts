@@ -63,12 +63,15 @@ function getAuth(input: string): { auth: { username: string; password: string } 
 
 function stringify(proxies: Proxy[]): string {
 	const proxyStrings = proxies.map((proxy) => {
-		let string = proxy.protocol
+		let string = ''
+		if (proxy.protocol !== 'http') {
+			string += proxy.protocol + '://'
+		}
 		let auth = proxy.auth
 		if (auth) {
 			string += `${auth.username}:${auth.password}@`
 		}
-		string += proxy.host + proxy.port
+		string += `${proxy.host}:${proxy.port}`
 		return string
 	})
 	return proxyStrings.join('\n')

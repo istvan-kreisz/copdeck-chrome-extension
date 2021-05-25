@@ -140,7 +140,7 @@ const SettingsTab = (prop: {
 						<QuestionMarkCircleIcon
 							onClick={setTelltipMessage.bind(null, {
 								title: 'Proxies',
-								message: `If you use the extension a lot there's a chance that your IP gets blocked by one of the supported stores. To avoid that, add proxies here, separated by a comma and the extension will take care of rotating them automatically. Make sure you click on "Save Settings" the bottom of this page.`,
+								message: `Add a list of proxies here if you're a heavy user and you're worried about your IP getting blocked by one of the supported sites. The extension will take care of rotating them automatically. Make sure you click on "Save Settings" on the bottom of this page. Alternatively, you can just use a VPN on your computer.`,
 								show: true,
 							})}
 							className="h-4 cursor-pointer text-gray-800 flex-shrink-0"
@@ -163,7 +163,7 @@ const SettingsTab = (prop: {
 							onClick={setTelltipMessage.bind(null, {
 								title: 'Refresh frequency',
 								message:
-									'This is how often the extension fetches new prices. Setting it lower gives you more accurate data but may increase the risk of your IP getting banned. We recommend using proxies in that case.',
+									"How often the extension fetches new prices. Lower settings give you more accurate data but may increase the risk of your IP getting blocked by a resell site. If you're a heavy user we recommend using proxies or a VPN.",
 								show: true,
 							})}
 							className="h-4 cursor-pointer text-gray-800 flex-shrink-0"
