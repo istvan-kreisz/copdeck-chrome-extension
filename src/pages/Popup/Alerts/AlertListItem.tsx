@@ -3,7 +3,7 @@ import ListItem from '../../Components/ListItem'
 import { ChevronRightIcon, TrashIcon } from '@heroicons/react/outline'
 
 const AlertListItem = ({
-	id,
+	key,
 	imageURL,
 	name,
 	onClicked,
@@ -16,7 +16,7 @@ const AlertListItem = ({
 	flipImage,
 }) => {
 	return (
-		<ListItem id={id} className="cursor-pointer" onClicked={onClicked}>
+		<ListItem key={key} className="cursor-pointer" onClicked={onClicked}>
 			<img
 				style={flipImage ? { transform: 'scaleX(-1)' } : {}}
 				className="flex-shrink-0 h-10 w-10 object-contain"

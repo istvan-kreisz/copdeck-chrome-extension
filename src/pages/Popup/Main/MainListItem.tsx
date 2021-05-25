@@ -2,9 +2,9 @@ import React from 'react'
 import ListItem from '../../Components/ListItem'
 import { ChevronRightIcon } from '@heroicons/react/outline'
 
-const MainListItem = ({ id, imageURL, name, currency, onClicked, children, flipImage }) => {
+const MainListItem = ({ imageURL, name, currency, onClicked, children, flipImage }) => {
 	return (
-		<ListItem id={id} className="cursor-pointer" onClicked={onClicked}>
+		<ListItem className="cursor-pointer" onClicked={onClicked}>
 			<img
 				style={flipImage ? { transform: 'scaleX(-1)' } : {}}
 				className="flex-shrink-0 h-10 w-10 object-contain"

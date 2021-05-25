@@ -1,11 +1,8 @@
 import React from 'react'
 
-const LoadingIndicator = (prop: { title: string; key: string }) => {
+const LoadingIndicator = (prop: { title: string }) => {
 	return (
-		<div
-			key={prop.key ?? ''}
-			className="inline-flex items-center pr-1 border border-transparent text-base leading-6 font-medium rounded-md text-gray-400 bg-rose-600 hover:bg-rose-500 focus:border-rose-700 active:bg-rose-700 transition ease-in-out duration-150 cursor-not-allowed"
-		>
+		<div className="inline-flex items-center pr-1 border border-transparent text-base leading-6 font-medium rounded-md text-gray-400 bg-rose-600 hover:bg-rose-500 focus:border-rose-700 active:bg-rose-700 transition ease-in-out duration-150 cursor-not-allowed">
 			<svg
 				className="animate-spin mr-3 h-4 w-4 text-gray-400"
 				xmlns="http://www.w3.org/2000/svg"

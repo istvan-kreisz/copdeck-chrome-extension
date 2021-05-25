@@ -121,7 +121,17 @@ const SettingsTab = (prop: {
 						})}
 					</div>
 
-					<h3 className="text-base font-bold mt-2 mb-1">Proxies</h3>
+					<div className="flex flex-row items-center mt-2 mb-1 space-x-1">
+						<h3 className="text-base font-bold">Proxies</h3>
+						<QuestionMarkCircleIcon
+							onClick={setTelltipMessage.bind(null, {
+								title: 'Proxies',
+								message: `If you use the extension a lot there's a chance that your IP gets blocked by one of the supported stores. To avoid that, add proxies here, separated by a comma and the extension will take care of rotating them automatically. Make sure you click on "Save Settings" the bottom of this page.`,
+								show: true,
+							})}
+							className="h-4 cursor-pointer text-gray-800 flex-shrink-0"
+						></QuestionMarkCircleIcon>
+					</div>
 
 					<textarea
 						ref={proxyTextField}
@@ -134,10 +144,10 @@ const SettingsTab = (prop: {
 					></textarea>
 
 					<div className="flex flex-row items-center mt-2 mb-1 space-x-1">
-						<h3 className="text-base font-bold">Refresh interval</h3>
+						<h3 className="text-base font-bold">Refresh frequency</h3>
 						<QuestionMarkCircleIcon
 							onClick={setTelltipMessage.bind(null, {
-								title: 'Refresh interval',
+								title: 'Refresh frequency',
 								message:
 									'This is how often the extension fetches new prices. Setting it lower gives you more accurate data but may increase the risk of your IP getting banned. We recommend using proxies in that case.',
 								show: true,
@@ -158,7 +168,17 @@ const SettingsTab = (prop: {
 						onChange={changedInterval}
 					/>
 
-					<h3 className="text-base font-bold mt-2 mb-1">Notification Frequency</h3>
+					<div className="flex flex-row items-center mt-2 mb-1 space-x-1">
+						<h3 className="text-base font-bold">Notification frequency</h3>
+						<QuestionMarkCircleIcon
+							onClick={setTelltipMessage.bind(null, {
+								title: 'Notification frequency',
+								message: `How often the extension will send you Chrome notifications if an item's price stays below your target price. Make sure notifications are enabled in your Chrome and system settings.`,
+								show: true,
+							})}
+							className="h-4 cursor-pointer text-gray-800 flex-shrink-0"
+						></QuestionMarkCircleIcon>
+					</div>
 
 					<label htmlFor="pricefield">{`${notificationFrequency} hours`}</label>
 

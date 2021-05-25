@@ -68,23 +68,15 @@ const MainTab = (prop: {
 					</button>
 				</div>
 				<ul className="my-4 flex flex-col space-y-3">
-					{searchState === 'searching' ? (
-						<LoadingIndicator key="loading" title="Loading"></LoadingIndicator>
-					) : null}
-					{typeof searchState === 'object' &&
-					searchState &&
-					searchState['length'] === 0 ? (
-						<p key="noresults">No Results</p>
-					) : null}
 					{typeof searchState === 'object'
 						? (searchState as Item[])?.map((item, index) => {
 								return (
 									<MainListItem
-										name={item.name}
+										key={item.id}
 										imageURL={item.imageURL?.url}
+										name={item.name}
 										flipImage={item.imageURL?.store.id === 'klekt'}
 										currency={'USD'}
-										id={item.id}
 										onClicked={clickedItem.bind(null, item)}
 									>
 										<p>{item.name}</p>
@@ -93,6 +85,12 @@ const MainTab = (prop: {
 						  })
 						: null}
 				</ul>
+				{searchState === 'searching' ? (
+					<LoadingIndicator key="loading" title="Loading"></LoadingIndicator>
+				) : null}
+				{typeof searchState === 'object' && searchState && searchState['length'] === 0 ? (
+					<p key="noresults">No Results</p>
+				) : null}
 			</div>
 			{selectedItem ? (
 				<ItemDetail

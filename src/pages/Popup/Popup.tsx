@@ -146,9 +146,9 @@ const Popup = () => {
 			</footer>
 			<div
 				onClick={hideToast}
-				className={`fixed top-3 left-3 right-3 h-10 flex items-center text-white bg-green-500 shadow-lg rounded-lg overflow-hidden mx-auto transition duration-500 ease-in-out transform ${
+				className={`fixed bottom-3 left-3 right-3 h-10 flex items-center text-white bg-green-500 shadow-lg rounded-lg overflow-hidden mx-auto transition duration-500 ease-in-out transform ${
 					toastMessage.show
-						? 'translate-y-4 opacity-100'
+						? '-translate-y-4 opacity-100'
 						: 'translate-y-0 opacity-0 pointer-events-none'
 				}`}
 			>

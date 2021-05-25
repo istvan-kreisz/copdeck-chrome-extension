@@ -4,8 +4,9 @@ import { assert } from 'superstruct'
 import { Item, Store, STOCKX, KLEKT, StoreId, Currency } from 'copdeck-scraper/dist/types'
 import { bestStoreInfo } from 'copdeck-scraper'
 import AddAlertModal from '../Popup/Main/AddAlertModal'
-import { ChevronLeftIcon } from '@heroicons/react/outline'
+import { ChevronLeftIcon, RefreshIcon, QuestionMarkCircleIcon } from '@heroicons/react/outline'
 import LoadingIndicator from '../Components/LoadingIndicator'
+import Popup from '../Components/Popup'
 
 const ItemDetail = (prop: {
 	selectedItem: Item
@@ -18,32 +19,55 @@ const ItemDetail = (prop: {
 		}>
 	>
 }) => {
+	const container = useRef<HTMLDivElement>(null)
 	const [showAddPriceAlertModal, setShowAddPriceAlertModal] = useState(false)
 	const [priceType, setPriceType] = useState<'ask' | 'bid'>('ask')
 	const didClickBack = useRef(false)
+
+	const [telltipMessage, setTelltipMessage] = useState<{
+		title: string
+		message: string
+		show: boolean
+	}>({
+		title: '',
+		message: '',
+		show: false,
+	})
 
 	const [isLoadingPrices, setIsLoadingPrices] = useState(false)
 
 	const storeInfo = bestStoreInfo(prop.selectedItem)
 
+	const updateItem = (forceRefresh: boolean) => {
+		setIsLoadingPrices(true)
+		chrome.runtime.sendMessage(
+			{ getItemDetails: { item: prop.selectedItem, forceRefresh: forceRefresh } },
+			(item) => {
+				try {
+					assert(item, Item)
+					if (!didClickBack.current) {
+						prop.setSelectedItem((current) => (current ? item : null))
+					}
+				} catch {}
+				setIsLoadingPrices(false)
+			}
+		)
+	}
+
 	useEffect(() => {
 		didClickBack.current = false
 		if (prop.selectedItem && prop.selectedItem.storePrices.length == 0) {
-			setIsLoadingPrices(true)
-			chrome.runtime.sendMessage(
-				{ getItemDetails: { item: prop.selectedItem, forceRefresh: false } },
-				(item) => {
-					try {
-						assert(item, Item)
-						if (!didClickBack.current) {
-							prop.setSelectedItem((current) => (current ? item : null))
-						}
-					} catch {}
-					setIsLoadingPrices(false)
-				}
-			)
+			updateItem(false)
 		}
 	}, [])
+
+	useEffect(() => {
+		if (!showAddPriceAlertModal) {
+			if (container.current) {
+				container.current.scrollTo(0, 0)
+			}
+		}
+	}, [showAddPriceAlertModal])
 
 	const backClicked = () => {
 		didClickBack.current = true
@@ -97,7 +121,10 @@ const ItemDetail = (prop: {
 
 	return (
 		<>
-			<div className="flexbg-white bg-gray-100 flex-col fixed inset-0 overflow-y-scroll">
+			<div
+				ref={container}
+				className="flexbg-white bg-gray-100 flex-col fixed inset-0 overflow-y-scroll"
+			>
 				<section className="relative bg-white w-screen h-48 ">
 					<img
 						className="w-48 h-full object-contain mx-auto"
@@ -164,7 +191,25 @@ const ItemDetail = (prop: {
 							Bid
 						</button>
 					</div>
-					<ul className="bg-white w-full flex flex-col space-y-2 mt-8">
+					<div className="mt-1 mb-6 flex flex-row items-center space-x-1">
+						<button
+							onClick={updateItem.bind(null, true)}
+							className="flex flex-row cursor-pointer focus:outline-none space-x-1 justify-center items-center"
+						>
+							<RefreshIcon className="font-bold h-4 text-theme-orange flex-shrink-0"></RefreshIcon>
+							<p className="text-theme-orange">Refresh prices</p>
+						</button>
+						<QuestionMarkCircleIcon
+							onClick={setTelltipMessage.bind(null, {
+								title: 'Price refresh',
+								message: `Prices will automatically get refreshed based on your "Refresh frequency" setting on the Settings tab. You can also manually refresh them using this button, but doing so too frequently (without using proxies) might get your IP blocked by the site.`,
+								show: true,
+							})}
+							className="h-4 cursor-pointer text-gray-800 flex-shrink-0"
+						></QuestionMarkCircleIcon>
+					</div>
+
+					<ul className="bg-white w-full flex flex-col space-y-2 mt-1">
 						<li key={'header'} className="flex flex-row space-x-4">
 							<p className="h-7 rounded-full flex justify-center items-center w-16">
 								Sizes
@@ -177,64 +222,66 @@ const ItemDetail = (prop: {
 							</p>
 							<p className="flex-grow"></p>
 						</li>
-						<div className="mt-6 ml-4">
-							{isLoadingPrices && !prop.selectedItem.storePrices.length ? (
-								<LoadingIndicator
-									key="loading"
-									title="Loading Prices"
-								></LoadingIndicator>
-							) : null}
-						</div>
 
-						{allSizes
-							.map((size) => {
-								return { size: size, prices: prices(size) }
-							})
-							.map((row) => {
-								return (
-									<li key={row.size} className="flex flex-row space-x-4">
-										<p className="bg-gray-300 h-7 rounded-full flex justify-center items-center w-16">
-											{row.size}
-										</p>
-										<p
-											onClick={priceClicked.bind(null, {
-												name: 'StockX',
-												id: 'stockx',
-											})}
-											className={`h-7 rounded-full cursor-pointer flex justify-center items-center w-16 ${
-												row.prices.stockx !== '-' &&
-												row.prices.best === 'stockx'
-													? 'border-2 border-green-500'
-													: 'border-2 border-white'
-											}`}
-										>
-											{row.prices.stockx}
-										</p>
-										<p
-											onClick={priceClicked.bind(null, {
-												name: 'Klekt',
-												id: 'klekt',
-											})}
-											className={`h-7 rounded-full cursor-pointer flex justify-center items-center w-16 ${
-												row.prices.klekt !== '-' &&
-												row.prices.best === 'klekt'
-													? 'border-2 border-green-500'
-													: 'border-2 border-white'
-											}`}
-										>
-											{row.prices.klekt}
-										</p>
-										<p className="flex-grow"></p>
-									</li>
-								)
-							})}
+						{!isLoadingPrices
+							? allSizes
+									.map((size) => {
+										return { size: size, prices: prices(size) }
+									})
+									.map((row) => {
+										return (
+											<li key={row.size} className="flex flex-row space-x-4">
+												<p className="bg-gray-300 h-7 rounded-full flex justify-center items-center w-16">
+													{row.size}
+												</p>
+												<p
+													onClick={priceClicked.bind(null, {
+														name: 'StockX',
+														id: 'stockx',
+													})}
+													className={`h-7 rounded-full cursor-pointer flex justify-center items-center w-16 ${
+														row.prices.stockx !== '-' &&
+														row.prices.best === 'stockx'
+															? 'border-2 border-green-500'
+															: 'border-2 border-white'
+													}`}
+												>
+													{row.prices.stockx}
+												</p>
+												<p
+													onClick={priceClicked.bind(null, {
+														name: 'Klekt',
+														id: 'klekt',
+													})}
+													className={`h-7 rounded-full cursor-pointer flex justify-center items-center w-16 ${
+														row.prices.klekt !== '-' &&
+														row.prices.best === 'klekt'
+															? 'border-2 border-green-500'
+															: 'border-2 border-white'
+													}`}
+												>
+													{row.prices.klekt}
+												</p>
+												<p className="flex-grow"></p>
+											</li>
+										)
+									})
+							: null}
 					</ul>
+					<div className="mt-6 ml-4 mb-3">
+						{isLoadingPrices ? (
+							<LoadingIndicator
+								key="loading"
+								title="Loading Prices"
+							></LoadingIndicator>
+						) : null}
+					</div>
 				</section>
 				<section className="bg-white w-screen p-3">
 					{prop.selectedItem.storePrices.length ? (
 						<button
 							style={{ fontWeight: 'normal' }}
-							className="mx-auto button-default h-9 flex-shrink-0 flex-grow-0 rounded-full font-thin bg-black text-white"
+							className="-mt-3 mb-4 mx-auto button-default h-9 flex-shrink-0 flex-grow-0 rounded-full font-thin bg-black text-white"
 							onClick={setShowAddPriceAlertModal.bind(null, true)}
 						>
 							Add price alert
@@ -252,6 +299,16 @@ const ItemDetail = (prop: {
 					setToastMessage={prop.setToastMessage}
 				></AddAlertModal>
 			) : null}
+			<Popup
+				title={telltipMessage?.title}
+				message={telltipMessage?.message}
+				open={telltipMessage?.show}
+				close={setTelltipMessage.bind(null, {
+					title: telltipMessage?.title ?? '',
+					message: telltipMessage?.message ?? '',
+					show: false,
+				})}
+			></Popup>
 		</>
 	)
 }

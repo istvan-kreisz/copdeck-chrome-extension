@@ -258,7 +258,7 @@ const sendNotifications = async () => {
 
 		const { getAlertsWithItems } = databaseCoordinator()
 		const alerts = await getAlertsWithItems()
-		console.log(alerts)
+		// console.log(alerts)
 		const alertsFiltered = alerts
 			.filter(([alert, item]) => {
 				// todo
@@ -353,15 +353,13 @@ chrome.storage.onChanged.addListener(async function (changes, namespace) {
 	}
 })
 
-// run audit
-// add force refresh to item detail
-// key errors
-// test refresh
+// todo: run audit
+
+// investigate timeout errors
 // todo: add goat
+// adjust height
 // todo: check uninstall survey
 // todo: add logo
-// add telltips in settings
-// todo: add warning about ip usage
 // todo: add proxy support
 // todo: why does communication keep breaking
 // todo: useragents

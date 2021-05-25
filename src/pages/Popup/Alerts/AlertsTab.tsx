@@ -56,7 +56,7 @@ const AlertsTab = (prop: {
 								name={item.name}
 								imageURL={item.imageURL?.url}
 								flipImage={item.imageURL?.store.id === 'klekt'}
-								id={alert.id}
+								key={alert.id}
 								onClicked={clickedItem.bind(null, item)}
 								stores={alert.stores.map((s) => s.name)}
 								bestPrice={itemBestPrice(item, alert)}
