@@ -113,7 +113,7 @@ const ItemDetail = (prop: {
 			}
 		})
 		const best = prices.reduce((prev, current) => {
-			return prev.price > current.price ? prev : current
+			return prev.price < current.price ? prev : current
 		})
 
 		return {
@@ -189,6 +189,7 @@ const ItemDetail = (prop: {
 							<h3 className="text-base">Price comparison</h3>
 							<p className="text-xs">Tap price to visit website</p>
 						</div>
+						<div className="flex-shrink flex-grow"></div>
 						<button
 							className={`button-default h-8 flex-shrink-0 flex-grow-0 rounded-full border-2 border-theme-blue ${
 								priceType === 'ask'
@@ -233,7 +234,10 @@ const ItemDetail = (prop: {
 							</p>
 							{ALLSTORES.map((store) => {
 								return (
-									<p className="h-7 text-gray-800 text-lg font-bold rounded-full flex justify-center items-center w-16">
+									<p
+										key={store.id}
+										className="h-7 text-gray-800 text-lg font-bold rounded-full flex justify-center items-center w-16"
+									>
 										{store.name}
 									</p>
 								)
@@ -255,6 +259,7 @@ const ItemDetail = (prop: {
 												{row.prices.prices.map((price) => {
 													return (
 														<p
+															key={price.store.id}
 															onClick={priceClicked.bind(
 																null,
 																price.store

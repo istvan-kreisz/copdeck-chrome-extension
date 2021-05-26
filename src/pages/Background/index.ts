@@ -136,6 +136,8 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 				const [settings, dev] = await Promise.all([getSettings(), getIsDevelopment()])
 				log('searching', dev)
 				const items = await browserAPI.searchItems(searchTerm, settings.currency, dev)
+				log('search results', dev)
+				log(items, dev)
 				sendResponse(items)
 			} catch (err) {
 				sendResponse([])
@@ -360,6 +362,7 @@ chrome.storage.onChanged.addListener(async function (changes, namespace) {
 
 // investigate timeout errors
 // todo: add goat
+// goat currency
 // todo: check uninstall survey
 // todo: add proxy support
 // todo: why does communication keep breaking
