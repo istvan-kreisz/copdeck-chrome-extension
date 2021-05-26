@@ -361,7 +361,6 @@ chrome.storage.onChanged.addListener(async function (changes, namespace) {
 })
 
 // investigate timeout errors
-// todo: add goat
 // goat currency
 // todo: check uninstall survey
 // todo: add proxy support

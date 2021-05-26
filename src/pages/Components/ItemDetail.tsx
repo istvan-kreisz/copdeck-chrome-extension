@@ -103,7 +103,7 @@ const ItemDetail = (prop: {
 		}
 	}
 
-	const prices = (size: string): { prices: { text: string; store: Store }[]; best: Store } => {
+	const prices = (size: string): { prices: { text: string; store: Store }[]; best?: Store } => {
 		const prices = ALLSTORES.map((store) => {
 			const p = price(size, store)
 			return {
@@ -112,12 +112,16 @@ const ItemDetail = (prop: {
 				store: store,
 			}
 		})
-		const best = prices.reduce((prev, current) => {
-			return prev.price < current.price ? prev : current
-		})
+		const realPrices = prices.filter((price) => price.priceText !== '-')
+		let best: Store | undefined
+		if (realPrices.length) {
+			best = realPrices.reduce((prev, current) => {
+				return prev.price < current.price ? prev : current
+			})?.store
+		}
 
 		return {
-			best: best.store,
+			best: best,
 			prices: prices.map((p) => {
 				return {
 					text: p.priceText,
@@ -267,7 +271,7 @@ const ItemDetail = (prop: {
 															className={`h-7 rounded-full cursor-pointer flex justify-center items-center w-16 ${
 																price.text !== '-' &&
 																price.store.id ===
-																	row.prices.best.id
+																	row.prices.best?.id
 																	? 'border-2 border-green-500'
 																	: 'border-2 border-white'
 															}`}
