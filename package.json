@@ -1,7 +1,7 @@
 {
 	"name": "copdeck-sneaker-monitor",
 	"version": "1.0.0",
-	"description": "CopDeck sneaker price monitoring Chrome Extension. Currently supporting the following stores: StockX, Klekt, Restocks.",
+	"description": "CopDeck sneaker price monitoring Chrome Extension. Currently supporting the following stores: StockX, Klekt, GOAT.",
 	"license": "MIT",
 	"repository": {
 		"type": "git",

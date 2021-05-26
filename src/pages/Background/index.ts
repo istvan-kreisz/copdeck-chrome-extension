@@ -359,7 +359,6 @@ chrome.storage.onChanged.addListener(async function (changes, namespace) {
 })
 
 // investigate timeout errors
-// fic images not loading
 // todo: add goat
 // todo: check uninstall survey
 // todo: add proxy support

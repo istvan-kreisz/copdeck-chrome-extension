@@ -1,7 +1,7 @@
 import React from 'react'
 import { useEffect, useState, useRef } from 'react'
 import { assert } from 'superstruct'
-import { Item, Store, STOCKX, KLEKT, StoreId, Currency } from 'copdeck-scraper/dist/types'
+import { Item, Store, Currency, ALLSTORES } from 'copdeck-scraper/dist/types'
 import { bestStoreInfo } from 'copdeck-scraper'
 import AddAlertModal from '../Popup/Main/AddAlertModal'
 import { ChevronLeftIcon, RefreshIcon, QuestionMarkCircleIcon } from '@heroicons/react/outline'
@@ -103,11 +103,28 @@ const ItemDetail = (prop: {
 		}
 	}
 
-	const prices = (size: string): { stockx: string; klekt: string; best: StoreId } => {
-		const stockxPrice = price(size, STOCKX)
-		const klektPrice = price(size, KLEKT)
-		const best: StoreId = stockxPrice[0] < klektPrice[0] ? 'stockx' : 'klekt'
-		return { stockx: stockxPrice[0], klekt: klektPrice[0], best: best }
+	const prices = (size: string): { prices: { text: string; store: Store }[]; best: Store } => {
+		const prices = ALLSTORES.map((store) => {
+			const p = price(size, store)
+			return {
+				priceText: p[0],
+				price: p[1],
+				store: store,
+			}
+		})
+		const best = prices.reduce((prev, current) => {
+			return prev.price > current.price ? prev : current
+		})
+
+		return {
+			best: best.store,
+			prices: prices.map((p) => {
+				return {
+					text: p.priceText,
+					store: p.store,
+				}
+			}),
+		}
 	}
 
 	const priceClicked = (store: Store) => {
@@ -214,12 +231,13 @@ const ItemDetail = (prop: {
 							<p className="h-7 rounded-full flex justify-center items-center w-16">
 								Sizes
 							</p>
-							<p className="h-7 text-gray-800 text-lg font-bold rounded-full flex justify-center items-center w-16">
-								StockX
-							</p>
-							<p className="h-7 text-gray-800 text-lg font-bold rounded-full flex justify-center items-center w-16">
-								Klekt
-							</p>
+							{ALLSTORES.map((store) => {
+								return (
+									<p className="h-7 text-gray-800 text-lg font-bold rounded-full flex justify-center items-center w-16">
+										{store.name}
+									</p>
+								)
+							})}
 							<p className="flex-grow"></p>
 						</li>
 
@@ -234,34 +252,25 @@ const ItemDetail = (prop: {
 												<p className="bg-gray-300 h-7 rounded-full flex justify-center items-center w-16">
 													{row.size}
 												</p>
-												<p
-													onClick={priceClicked.bind(null, {
-														name: 'StockX',
-														id: 'stockx',
-													})}
-													className={`h-7 rounded-full cursor-pointer flex justify-center items-center w-16 ${
-														row.prices.stockx !== '-' &&
-														row.prices.best === 'stockx'
-															? 'border-2 border-green-500'
-															: 'border-2 border-white'
-													}`}
-												>
-													{row.prices.stockx}
-												</p>
-												<p
-													onClick={priceClicked.bind(null, {
-														name: 'Klekt',
-														id: 'klekt',
-													})}
-													className={`h-7 rounded-full cursor-pointer flex justify-center items-center w-16 ${
-														row.prices.klekt !== '-' &&
-														row.prices.best === 'klekt'
-															? 'border-2 border-green-500'
-															: 'border-2 border-white'
-													}`}
-												>
-													{row.prices.klekt}
-												</p>
+												{row.prices.prices.map((price) => {
+													return (
+														<p
+															onClick={priceClicked.bind(
+																null,
+																price.store
+															)}
+															className={`h-7 rounded-full cursor-pointer flex justify-center items-center w-16 ${
+																price.text !== '-' &&
+																price.store.id ===
+																	row.prices.best.id
+																	? 'border-2 border-green-500'
+																	: 'border-2 border-white'
+															}`}
+														>
+															{price.text}
+														</p>
+													)
+												})}
 												<p className="flex-grow"></p>
 											</li>
 										)
