@@ -6,11 +6,12 @@ import {
 	didFailToFetchAllStorePrices,
 } from 'copdeck-scraper'
 import { assert, string, is, boolean } from 'superstruct'
-import { Item } from 'copdeck-scraper/dist/types'
+import { APIConfig, Item, Proxy } from 'copdeck-scraper/dist/types'
 import { databaseCoordinator } from '../services/databaseCoordinator'
 import { Settings } from '../utils/types'
 import { parse } from '../utils/proxyparser'
 import { log } from '../utils/logger'
+// import { uuidv4 } from 'uuid'
 
 const minUpdateInterval = 5
 const maxUpdateInterval = 1440
@@ -24,6 +25,14 @@ const clearCache = async () => {
 		await clearItemCache()
 	} catch (err) {
 		log(err, true)
+	}
+}
+
+const apiConfig = (settings: Settings, dev: boolean): APIConfig => {
+	return {
+		currency: settings.currency,
+		isLoggingEnabled: dev,
+		proxies: settings.proxies,
 	}
 }
 
@@ -62,7 +71,7 @@ const updatePrices = async (forced: boolean = false) => {
 						const delay = Math.random() * requestDelayMax
 						setTimeout(() => {
 							browserAPI
-								.getItemPrices(item, settings.currency, dev)
+								.getItemPrices(item, apiConfig(settings, dev))
 								.then((result) => {
 									resolve(result)
 								})
@@ -89,7 +98,7 @@ const updatePrices = async (forced: boolean = false) => {
 const fetchAndSave = async (item: Item) => {
 	const { updateItem, getSettings, getIsDevelopment } = databaseCoordinator()
 	const [settings, dev] = await Promise.all([getSettings(), getIsDevelopment()])
-	const newItem = await browserAPI.getItemPrices(item, settings.currency, dev)
+	const newItem = await browserAPI.getItemPrices(item, apiConfig(settings, dev))
 	await updateItem(newItem, dev)
 	return newItem
 }
@@ -135,7 +144,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 				const { getSettings, getIsDevelopment } = databaseCoordinator()
 				const [settings, dev] = await Promise.all([getSettings(), getIsDevelopment()])
 				log('searching', dev)
-				const items = await browserAPI.searchItems(searchTerm, settings.currency, dev)
+				const items = await browserAPI.searchItems(searchTerm, apiConfig(settings, dev))
 				log('search results', dev)
 				log(items, dev)
 				sendResponse(items)
@@ -284,10 +293,18 @@ const sendNotifications = async () => {
 				const bestPrice = itemBestPrice(item, alert)
 
 				if (bestPrice) {
-					if (bestPrice < alert.targetPrice) {
-						return true
+					if (alert.targetPriceType === 'below') {
+						if (bestPrice < alert.targetPrice) {
+							return true
+						} else {
+							return false
+						}
 					} else {
-						return false
+						if (bestPrice > alert.targetPrice) {
+							return true
+						} else {
+							return false
+						}
 					}
 				} else {
 					return false
@@ -303,7 +320,11 @@ const sendNotifications = async () => {
 		// 				type: 'basic',
 		// 				iconUrl: 'http://www.google.com/favicon.ico',
 		// 				title: 'CopDeck Price Alert!',
-		// 				message: `${item.name} price dropped below ${alert.targetPrice}! Current best price: ${settings.currency}${bestPrice}`,
+		// 				message: `${item.name} price ${
+		// 					alert.targetPriceType === 'above' ? 'went above' : 'dropped below'
+		// 				} ${alert.targetPrice}! Current best price: ${
+		// 					settings.currency
+		// 				}${bestPrice}`,
 		// 				priority: 2,
 		// 			},
 		// 			() => {
@@ -360,11 +381,37 @@ chrome.storage.onChanged.addListener(async function (changes, namespace) {
 	}
 })
 
-// investigate timeout errors
+// fix image glitch
+// add goat price options
+// add telltip about goat pricing
 // goat currency
 // todo: check uninstall survey
 // todo: add proxy support
 // todo: why does communication keep breaking
-// todo: useragents
 // todo: fix notifications
 // test notification refresh
+
+// chrome.proxy.settings.set({ value: config, scope: 'regular' }, function () {
+// 	chrome.proxy.settings.get({}, function (config) {
+// 		console.log(config.value, config.value.host)
+// 	})
+// })
+
+// const pacScriptConfig = {
+// 	mode: 'pac_script',
+// 	pacScript: {
+// 		data: `function FindProxyForURL(url, host) {
+//         if (host === "google.com") {
+//           return "PROXY 117.242.147.89:57599";
+//         } else {
+//           return "DIRECT";
+//         }
+//       }`,
+// 	},
+// }
+
+// chrome.proxy.settings.set({ value: pacScriptConfig, scope: 'regular' }, () => {})
+
+// chrome.proxy.settings.get({ incognito: false }, function (config) {
+// 	console.log(JSON.stringify(config))
+// })

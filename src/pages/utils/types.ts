@@ -1,19 +1,5 @@
 import { string, number, object, optional, Infer, array } from 'superstruct'
-import { Currency } from 'copdeck-scraper/dist/types'
-
-const Proxy = object({
-	host: string(),
-	port: number(),
-	protocol: string(),
-	auth: optional(
-		object({
-			username: string(),
-			password: string(),
-		})
-	),
-})
-
-type Proxy = Infer<typeof Proxy>
+import { Currency, Proxy } from 'copdeck-scraper/dist/types'
 
 const Settings = object({
 	proxies: array(Proxy),

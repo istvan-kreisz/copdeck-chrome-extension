@@ -7,6 +7,7 @@ const AlertListItem = ({
 	name,
 	onClicked,
 	bestPrice,
+	targetPriceType,
 	currency,
 	targetSize,
 	targetPrice,
@@ -34,7 +35,7 @@ const AlertListItem = ({
 					<p
 						className={`h-5 flex items-center flex-shrink-0 px-2 flex-grow-0 rounded-full bg-theme-orange text-white`}
 					>
-						{currency + targetPrice}
+						{(targetPriceType === 'above' ? '>' : '<') + currency + targetPrice}
 					</p>
 				</div>
 				<div className="flex space-x-1">
@@ -56,7 +57,8 @@ const AlertListItem = ({
 				<p
 					className={`text-gray-800 font-medium text-base ${
 						bestPrice
-							? (bestPrice ?? 99999) < targetPrice
+							? ((bestPrice ?? 99999) < targetPrice && targetPriceType === 'below') ||
+							  ((bestPrice ?? 99999) > targetPrice && targetPriceType === 'above')
 								? 'text-green-500'
 								: 'text-red-500'
 							: ''

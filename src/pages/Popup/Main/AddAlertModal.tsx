@@ -4,6 +4,7 @@ import { Item, StorePrices, PriceAlert, Currency } from 'copdeck-scraper/dist/ty
 import { v4 as uuidv4 } from 'uuid'
 import { databaseCoordinator } from '../../services/databaseCoordinator'
 import Popup from '../../Components/Popup'
+import { is, type } from 'copdeck-scraper/node_modules/superstruct'
 
 const AddAlertModal = (prop: {
 	selectedItem: Item
@@ -19,6 +20,7 @@ const AddAlertModal = (prop: {
 }) => {
 	const [selectedStores, setSelectedStores] = useState<StorePrices[]>([])
 	const [selectedSize, setSelectedSize] = useState<string>()
+	const [selectedType, setSelectedType] = useState<string>('below')
 
 	const [error, setError] = useState<{ message: string; show: boolean }>({
 		message: '',
@@ -69,6 +71,10 @@ const AddAlertModal = (prop: {
 		setSelectedSize(event.target.value)
 	}
 
+	const typeSelected = (event: { target: HTMLSelectElement }) => {
+		setSelectedType(event.target.value)
+	}
+
 	const storeLabel = (store: StorePrices): string => {
 		let label = store.store.name
 		if (selectedSize) {
@@ -86,7 +92,13 @@ const AddAlertModal = (prop: {
 		event.preventDefault()
 		const price = parseFloat(priceField.current?.value ?? '')
 
-		if (!price || !selectedSize || !selectedStores.length || !prop.selectedItem) {
+		if (
+			!price ||
+			!selectedSize ||
+			!selectedStores.length ||
+			!prop.selectedItem ||
+			(selectedType !== 'above' && selectedType !== 'below')
+		) {
 			setError({ message: 'Please fill out all the fields', show: true })
 			return
 		}
@@ -95,6 +107,7 @@ const AddAlertModal = (prop: {
 			id: uuidv4(),
 			itemId: prop.selectedItem?.id ?? '',
 			targetPrice: price,
+			targetPriceType: selectedType,
 			targetSize: selectedSize,
 			stores: selectedStores.map((store) => store.store),
 		}
@@ -145,15 +158,30 @@ const AddAlertModal = (prop: {
 							return <option value={size}>{size}</option>
 						})}
 					</select>
-					<h3 className="text-base font-bold mt-4 mb-1">{`3. Select target price ${prop.currency.symbol}`}</h3>
-					<input
-						className="w-full bg-white rounded-xl border border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 text-base outline-none leading-8"
-						ref={priceField}
-						type="number"
-						name="pricefield"
-						id="pricefield"
-					/>
+					<h3 className="text-base font-bold mt-4 mb-1">{`3. Notify me when price goes `}</h3>
 
+					<div className="flex flex-row flex-nowrap space-x-2 items-center">
+						<select
+							className="w-full bg-white rounded-xl border border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 text-base outline-none leading-8"
+							onChange={typeSelected}
+							name="type"
+							id="type"
+						>
+							<option value="above">Above</option>
+							<option selected={true} value="below">
+								Below
+							</option>
+						</select>
+
+						<input
+							className="w-full bg-white rounded-xl border border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 text-base outline-none leading-8"
+							ref={priceField}
+							type="number"
+							name="pricefield"
+							id="pricefield"
+						/>
+						<p className="text-xl font-medium">{prop.currency.symbol}</p>
+					</div>
 					<input
 						className="mt-4 button-default text-white bg-theme-orange hover:bg-theme-orange-dark rounded-lg bg h-10 shadow-md border-transparent"
 						type="submit"

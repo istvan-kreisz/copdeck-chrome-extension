@@ -56,7 +56,7 @@ const ItemDetail = (prop: {
 
 	useEffect(() => {
 		didClickBack.current = false
-		if (prop.selectedItem && prop.selectedItem.storePrices.length == 0) {
+		if (prop.selectedItem) {
 			updateItem(false)
 		}
 	}, [])

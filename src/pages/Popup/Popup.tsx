@@ -6,7 +6,7 @@ import { useState, useEffect } from 'react'
 import { CheckIcon } from '@heroicons/react/outline'
 import { SearchIcon, CogIcon, BellIcon, DeviceMobileIcon } from '@heroicons/react/outline'
 import { databaseCoordinator } from '../services/databaseCoordinator'
-import { Currency, EUR, USD } from 'copdeck-scraper/dist/types'
+import { Currency, EUR } from 'copdeck-scraper/dist/types'
 
 const Popup = () => {
 	const [activeTab, setActiveTab] = useState<'main' | 'settings' | 'alerts'>('main')
