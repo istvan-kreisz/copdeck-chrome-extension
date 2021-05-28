@@ -11,7 +11,7 @@ import { databaseCoordinator } from '../services/databaseCoordinator'
 import { Settings } from '../utils/types'
 import { parse } from '../utils/proxyparser'
 import { log } from '../utils/logger'
-// import { uuidv4 } from 'uuid'
+import { v4 as uuidv4 } from 'uuid'
 
 const minUpdateInterval = 5
 const maxUpdateInterval = 1440
@@ -56,7 +56,6 @@ const shouldUpdateItem = (item: Item, updateInterval: number): boolean => {
 }
 
 const updatePrices = async (forced: boolean = false) => {
-	return
 	const { getItems, saveItems, getAlerts, updateItems, getSettings, getIsDevelopment } =
 		databaseCoordinator()
 
@@ -295,26 +294,30 @@ const addrefreshPricesAlarm = async (deleteIfExists: boolean) => {
 }
 
 const sendNotifications = async () => {
-	const { getSettings, updateLastNotificationDateForAlert } = databaseCoordinator()
+	const {
+		getSettings,
+		updateLastNotificationDateForAlerts,
+		getIsDevelopment,
+		getAlertsWithItems,
+	} = databaseCoordinator()
 	try {
-		const settings = await getSettings()
+		const [alerts, settings, dev] = await Promise.all([
+			getAlertsWithItems(),
+			getSettings(),
+			getIsDevelopment(),
+		])
 
-		const { getAlertsWithItems } = databaseCoordinator()
-		const alerts = await getAlertsWithItems()
-		// console.log(alerts)
 		const alertsFiltered = alerts
 			.filter(([alert, item]) => {
-				// todo
-				return true
-				// if (alert.lastNotificationSent) {
-				// 	return isOlderThan(
-				// 		alert.lastNotificationSent,
-				// 		settings.notificationFrequency,
-				// 		'hours'
-				// 	)
-				// } else {
-				// 	return true
-				// }
+				if (alert.lastNotificationSent) {
+					return isOlderThan(
+						alert.lastNotificationSent,
+						settings.notificationFrequency,
+						'hours'
+					)
+				} else {
+					return true
+				}
 			})
 			.filter(([alert, item]) => {
 				const bestPrice = itemBestPrice(item, alert)
@@ -338,29 +341,30 @@ const sendNotifications = async () => {
 				}
 			})
 
-		// return promiseAllSkippingErrors(
-		// 	alertsFiltered.map(([alert, item]) => {
-		// 		const bestPrice = itemBestPrice(item, alert)
-		// 		chrome.notifications.create(
-		// 			uuidv4(),
-		// 			{
-		// 				type: 'basic',
-		// 				iconUrl: 'http://www.google.com/favicon.ico',
-		// 				title: 'CopDeck Price Alert!',
-		// 				message: `${item.name} price ${
-		// 					alert.targetPriceType === 'above' ? 'went above' : 'dropped below'
-		// 				} ${alert.targetPrice}! Current best price: ${
-		// 					settings.currency
-		// 				}${bestPrice}`,
-		// 				priority: 2,
-		// 			},
-		// 			() => {
-		// 				console.log('Last error:', chrome.runtime.lastError)
-		// 			}
-		// 		)
-		// 		return updateLastNotificationDateForAlert(alert)
-		// 	})
-		// )
+		alertsFiltered.forEach(([alert, item]) => {
+			const bestPrice = itemBestPrice(item, alert)
+			log('notification sent', dev)
+			log(alert, dev)
+			chrome.notifications.create(
+				uuidv4(),
+				{
+					type: 'basic',
+					iconUrl: 'icon-48.png',
+					title: 'CopDeck Price Alert!',
+					message: `${item.name} price ${
+						alert.targetPriceType === 'above' ? 'went above' : 'dropped below'
+					} ${settings.currency.symbol}${alert.targetPrice}! Current best price: ${
+						settings.currency.symbol
+					}${bestPrice}`,
+					priority: 2,
+				},
+				() => {
+					console.log('Last error:', chrome.runtime.lastError)
+				}
+			)
+		})
+
+		await updateLastNotificationDateForAlerts(alertsFiltered.map(([alert, item]) => alert))
 	} catch (err) {
 		console.log(err)
 	}
@@ -378,7 +382,7 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
 })
 
 chrome.runtime.onStartup.addListener(async () => {
-	chrome.runtime.setUninstallURL('https://google.com')
+	chrome.runtime.setUninstallURL('https://copdeck.com/extensionsurvey')
 })
 
 chrome.runtime.onInstalled.addListener(async () => {
@@ -388,6 +392,8 @@ chrome.runtime.onInstalled.addListener(async () => {
 		addRefreshExchangeRatesAlarm(),
 		refreshExchangeRates(),
 	])
+	// todo: remove
+	await sendNotifications()
 })
 
 chrome.storage.onChanged.addListener(async function (changes, namespace) {
@@ -419,12 +425,7 @@ chrome.storage.onChanged.addListener(async function (changes, namespace) {
 // add goat price options
 // add telltip about goat pricing
 // goat currency
-// todo: check uninstall survey
 // todo: add proxy support
-// todo: why does communication keep breaking
-// todo: fix notifications
-// test notification refresh
-// refresh alerts when they come on screen
 
 // chrome.proxy.settings.set({ value: config, scope: 'regular' }, function () {
 // 	chrome.proxy.settings.get({}, function (config) {

@@ -30,6 +30,15 @@ const AlertsTab = (prop: {
 		}
 	}, [prop.activeTab])
 
+	useEffect(() => {
+		if (!selectedItem) {
+			;(async () => {
+				const alertsWithItems = await getAlertsWithItems()
+				setPriceAlerts(alertsWithItems)
+			})()
+		}
+	}, [selectedItem])
+
 	const clickedItem = (item: Item) => {
 		if (item.id !== selectedItem?.id) {
 			setSelectedItem(item)

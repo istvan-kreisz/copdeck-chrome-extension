@@ -263,13 +263,16 @@ export const databaseCoordinator = () => {
 		}
 	}
 
-	const updateLastNotificationDateForAlert = async (alert: PriceAlert) => {
-		const alerts = await getAlerts()
-		const savedAlert = alerts.find((a) => alert.id === a.id)
-		if (savedAlert) {
-			savedAlert.lastNotificationSent = new Date().getTime()
-			await asyncSet('alerts', alerts)
-		}
+	const updateLastNotificationDateForAlerts = async (alertsToUpdate: PriceAlert[]) => {
+		const savedAlerts = await getAlerts()
+		const updatedAlerts = savedAlerts.map((savedAlert) => {
+			const alert = alertsToUpdate.find((a) => savedAlert.id === a.id)
+			if (alert) {
+				savedAlert.lastNotificationSent = new Date().getTime()
+			}
+			return savedAlert
+		})
+		await asyncSet('alerts', updatedAlerts)
 	}
 
 	return {
@@ -289,6 +292,6 @@ export const databaseCoordinator = () => {
 		saveExchangeRates: saveExchangeRates,
 		deleteAlert: deleteAlert,
 		clearItemCache: clearItemCache,
-		updateLastNotificationDateForAlert: updateLastNotificationDateForAlert,
+		updateLastNotificationDateForAlerts: updateLastNotificationDateForAlerts,
 	}
 }
