@@ -421,7 +421,6 @@ chrome.storage.onChanged.addListener(async function (changes, namespace) {
 	}
 })
 
-// fix image glitch
 // add goat price options
 // add telltip about goat pricing
 // goat currency
