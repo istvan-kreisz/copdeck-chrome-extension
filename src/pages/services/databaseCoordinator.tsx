@@ -1,5 +1,5 @@
 import { array, assert, boolean, is, number } from 'superstruct'
-import { Item, PriceAlert, EUR } from 'copdeck-scraper/dist/types'
+import { Item, PriceAlert, EUR, ExchangeRates } from 'copdeck-scraper/dist/types'
 import { removeDuplicates } from 'copdeck-scraper'
 import { Settings } from '../utils/types'
 import { log } from '../utils/logger'
@@ -102,6 +102,16 @@ export const databaseCoordinator = () => {
 		} else {
 			await saveSettings(defaultSettings)
 			return defaultSettings
+		}
+	}
+
+	const getExchangeRates = async (): Promise<ExchangeRates | null> => {
+		const result = await asyncGet('exchangeRates')
+		const exchangeRates = result.exchangeRates
+		if (is(exchangeRates, ExchangeRates)) {
+			return exchangeRates
+		} else {
+			return null
 		}
 	}
 
@@ -221,6 +231,10 @@ export const databaseCoordinator = () => {
 		asyncSet('settings', settings)
 	}
 
+	const saveExchangeRates = async (exchangeRates: ExchangeRates) => {
+		asyncSet('exchangeRates', exchangeRates)
+	}
+
 	const saveIsDevelopment = async (isDevelopment: boolean) => {
 		asyncSet('isDevelopment', isDevelopment)
 	}
@@ -264,6 +278,7 @@ export const databaseCoordinator = () => {
 		getItemWithId: getItemWithId,
 		getAlerts: getAlerts,
 		getSettings: getSettings,
+		getExchangeRates: getExchangeRates,
 		getIsDevelopment: getIsDevelopment,
 		listenToSettingsChanges: listenToSettingsChanges,
 		updateItem: updateItem,
@@ -271,6 +286,7 @@ export const databaseCoordinator = () => {
 		updateItems: updateItems,
 		saveAlert: saveAlert,
 		saveSettings: saveSettings,
+		saveExchangeRates: saveExchangeRates,
 		deleteAlert: deleteAlert,
 		clearItemCache: clearItemCache,
 		updateLastNotificationDateForAlert: updateLastNotificationDateForAlert,

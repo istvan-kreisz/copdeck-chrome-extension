@@ -16,7 +16,8 @@ import { log } from '../utils/logger'
 const minUpdateInterval = 5
 const maxUpdateInterval = 1440
 const cacheAlarm = 'copdeckCacheAlarm'
-const refreshAlarm = 'copdeckRefreshAlarm'
+const refreshPricesAlarm = 'copdeckRefreshPricesAlarm'
+const refreshExchangeRatesAlarm = 'copdeckrefreshExchangeRatesAlarm'
 const requestDelayMax = 1000
 
 const clearCache = async () => {
@@ -25,6 +26,19 @@ const clearCache = async () => {
 		await clearItemCache()
 	} catch (err) {
 		log(err, true)
+	}
+}
+
+const refreshExchangeRates = async () => {
+	const { getSettings, getIsDevelopment, saveExchangeRates } = databaseCoordinator()
+
+	const [settings, dev] = await Promise.all([getSettings(), getIsDevelopment()])
+
+	try {
+		const rates = await browserAPI.getExchangeRates(apiConfig(settings, dev))
+		await saveExchangeRates(rates)
+	} catch (err) {
+		log(err, dev)
 	}
 }
 
@@ -229,32 +243,45 @@ const addClearCacheAlarm = async () => {
 	})
 }
 
-const addRefreshAlarm = async (deleteIfExists: boolean) => {
+const addRefreshExchangeRatesAlarm = async () => {
+	return new Promise<void>((resolve, reject) => {
+		chrome.alarms.get(refreshExchangeRatesAlarm, (a) => {
+			if (!a) {
+				chrome.alarms.create(refreshExchangeRatesAlarm, {
+					periodInMinutes: 720,
+				})
+			}
+			resolve()
+		})
+	})
+}
+
+const addrefreshPricesAlarm = async (deleteIfExists: boolean) => {
 	const { getSettings } = databaseCoordinator()
 	try {
 		const settings = await getSettings()
 
 		return new Promise<void>((resolve, reject) => {
-			chrome.alarms.get(refreshAlarm, (a) => {
+			chrome.alarms.get(refreshPricesAlarm, (a) => {
 				if (deleteIfExists) {
 					if (a) {
-						chrome.alarms.clear(refreshAlarm, (wasCleared) => {
+						chrome.alarms.clear(refreshPricesAlarm, (wasCleared) => {
 							if (wasCleared) {
-								chrome.alarms.create(refreshAlarm, {
+								chrome.alarms.create(refreshPricesAlarm, {
 									periodInMinutes: settings.updateInterval,
 								})
 							}
 							resolve()
 						})
 					} else {
-						chrome.alarms.create(refreshAlarm, {
+						chrome.alarms.create(refreshPricesAlarm, {
 							periodInMinutes: settings.updateInterval,
 						})
 						resolve()
 					}
 				} else {
 					if (!a) {
-						chrome.alarms.create(refreshAlarm, {
+						chrome.alarms.create(refreshPricesAlarm, {
 							periodInMinutes: settings.updateInterval,
 						})
 					}
@@ -340,11 +367,13 @@ const sendNotifications = async () => {
 }
 
 chrome.alarms.onAlarm.addListener(async (alarm) => {
-	if (alarm.name == refreshAlarm) {
+	if (alarm.name === refreshPricesAlarm) {
 		await updatePrices()
 		await sendNotifications()
-	} else if (alarm.name == cacheAlarm) {
+	} else if (alarm.name === cacheAlarm) {
 		await clearCache()
+	} else if (alarm.name === refreshExchangeRatesAlarm) {
+		await refreshExchangeRates()
 	}
 })
 
@@ -353,7 +382,12 @@ chrome.runtime.onStartup.addListener(async () => {
 })
 
 chrome.runtime.onInstalled.addListener(async () => {
-	await Promise.all([addRefreshAlarm(false), addClearCacheAlarm()])
+	await Promise.all([
+		addrefreshPricesAlarm(false),
+		addClearCacheAlarm(),
+		addRefreshExchangeRatesAlarm(),
+		refreshExchangeRates(),
+	])
 })
 
 chrome.storage.onChanged.addListener(async function (changes, namespace) {
@@ -376,7 +410,7 @@ chrome.storage.onChanged.addListener(async function (changes, namespace) {
 			await updatePrices(true)
 		}
 		if (settingsOld.updateInterval !== settingsNew.updateInterval) {
-			await addRefreshAlarm(true)
+			await addrefreshPricesAlarm(true)
 		}
 	}
 })
@@ -390,6 +424,7 @@ chrome.storage.onChanged.addListener(async function (changes, namespace) {
 // todo: why does communication keep breaking
 // todo: fix notifications
 // test notification refresh
+// refresh alerts when they come on screen
 
 // chrome.proxy.settings.set({ value: config, scope: 'regular' }, function () {
 // 	chrome.proxy.settings.get({}, function (config) {
