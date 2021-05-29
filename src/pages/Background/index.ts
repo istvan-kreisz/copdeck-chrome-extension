@@ -187,29 +187,30 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 		;(async () => {
 			try {
 				const settings = msg.settings.settings
-				const proxyString = msg.settings.proxyString
+				// const proxyString = msg.settings.proxyString
 				assert(settings, Settings)
-				assert(proxyString, string())
+				// assert(proxyString, string())
 				const dev = await getIsDevelopment()
 
-				let proxyParseError
-				if (proxyString) {
-					try {
-						settings.proxies = parse(proxyString)
-					} catch (err) {
-						settings.proxies = []
-						proxyParseError = err['message'] ?? 'Invalid proxy format'
-						log('proxy error', dev)
-						log(err, dev)
-					}
-				}
+				// let proxyParseError
+				// if (proxyString) {
+				// 	try {
+				// 		settings.proxies = parse(proxyString)
+				// 	} catch (err) {
+				// 		settings.proxies = []
+				// 		proxyParseError = err['message'] ?? 'Invalid proxy format'
+				// 		log('proxy error', dev)
+				// 		log(err, dev)
+				// 	}
+				// }
 				if (settings.updateInterval < minUpdateInterval) {
 					settings.updateInterval = minUpdateInterval
 				} else if (settings.updateInterval > maxUpdateInterval) {
 					settings.updateInterval = maxUpdateInterval
 				}
 				await saveSettings(settings)
-				sendResponse(proxyParseError)
+				// sendResponse(proxyParseError)
+				sendResponse()
 			} catch (err) {
 				console.log(err)
 				sendResponse(err)
