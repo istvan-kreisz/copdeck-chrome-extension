@@ -1,5 +1,12 @@
 module.exports = {
-	purge: ['./src/**/*.html', './src/**/*.js'],
+	purge: [
+		'./src/pages/Components/**/*.{js,ts,jsx,tsx}',
+		'./src/pages/Popup/**/*.{js,ts,jsx,tsx}',
+		'./src/pages/Popup/Alerts/**/*.{js,ts,jsx,tsx}',
+		'./src/pages/Popup/Main/**/*.{js,ts,jsx,tsx}',
+		'./src/pages/Popup/Settings/**/*.{js,ts,jsx,tsx}',
+	],
+
 	darkMode: false, // or 'media' or 'class'
 	theme: {
 		extend: {
