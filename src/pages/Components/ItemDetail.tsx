@@ -1,12 +1,13 @@
 import React from 'react'
 import { useEffect, useState, useRef } from 'react'
 import { assert } from 'superstruct'
-import { Item, Store, Currency, ALLSTORES } from 'copdeck-scraper/dist/types'
+import { Item, Store, Currency, ALLSTORES, ExchangeRates } from 'copdeck-scraper/dist/types'
 import { bestStoreInfo } from 'copdeck-scraper'
 import AddAlertModal from '../Popup/Main/AddAlertModal'
 import { ChevronLeftIcon, RefreshIcon, QuestionMarkCircleIcon } from '@heroicons/react/outline'
 import LoadingIndicator from '../Components/LoadingIndicator'
 import Popup from '../Components/Popup'
+import { databaseCoordinator } from '../services/databaseCoordinator'
 
 const ItemDetail = (prop: {
 	selectedItem: Item
@@ -23,10 +24,13 @@ const ItemDetail = (prop: {
 	const [showAddPriceAlertModal, setShowAddPriceAlertModal] = useState(false)
 	const [priceType, setPriceType] = useState<'ask' | 'bid'>('ask')
 	const didClickBack = useRef(false)
+	const [exchangeRates, setExchangeRates] = useState<ExchangeRates>()
+
+	const { getExchangeRates } = databaseCoordinator()
 
 	const [telltipMessage, setTelltipMessage] = useState<{
 		title: string
-		message: string
+		message: JSX.Element | string
 		show: boolean
 	}>({
 		title: '',
@@ -59,6 +63,12 @@ const ItemDetail = (prop: {
 		if (prop.selectedItem) {
 			updateItem(false)
 		}
+		;(async () => {
+			const rates = await getExchangeRates()
+			if (rates) {
+				setExchangeRates(rates)
+			}
+		})()
 	}, [])
 
 	useEffect(() => {
@@ -97,7 +107,22 @@ const ItemDetail = (prop: {
 			?.inventory.find((inventoryItem) => inventoryItem.size === size)
 		let price = priceType === 'ask' ? prices?.lowestAsk : prices?.highestBid
 		if (price) {
-			return [prop.currency.symbol + price, price]
+			if (store.id === 'goat' && prop.currency.code !== 'USD') {
+				if (exchangeRates) {
+					switch (prop.currency.code) {
+						case 'EUR':
+							price = Math.round(price / exchangeRates.usd)
+							break
+						case 'GBP':
+							price = Math.round((price / exchangeRates.usd) * exchangeRates.gbp)
+					}
+					return [prop.currency.symbol + price, price]
+				} else {
+					return ['-', 0]
+				}
+			} else {
+				return [prop.currency.symbol + price, price]
+			}
 		} else {
 			return ['-', 0]
 		}
@@ -135,7 +160,7 @@ const ItemDetail = (prop: {
 		const storeInfo = prop.selectedItem.storeInfo.find((s) => s.store.id === store.id)
 		if (storeInfo) {
 			chrome.tabs.create({
-				url: `https://${storeInfo.store.id}.com/product/${storeInfo.slug}`,
+				url: storeInfo.url,
 			})
 		}
 	}
@@ -191,7 +216,7 @@ const ItemDetail = (prop: {
 					<div className="flex flex-row space-x-2 justify-between items-center flex-nowrap">
 						<div className="flex flex-col">
 							<h3 className="text-base">Price comparison</h3>
-							<p className="text-xs">Tap price to visit website</p>
+							<p className="text-xs">Tap store's name to visit website</p>
 						</div>
 						<div className="flex-shrink flex-grow"></div>
 						<button
@@ -227,7 +252,7 @@ const ItemDetail = (prop: {
 								message: `Prices will automatically get refreshed based on your "Refresh frequency" setting on the Settings tab. You can also manually refresh them using this button, but doing so too frequently (without using proxies) might get your IP blocked by the site.`,
 								show: true,
 							})}
-							className="h-4 cursor-pointer text-gray-800 flex-shrink-0"
+							className="h-4 cursor-pointer text-gray-800 font-semibold flex-shrink-0"
 						></QuestionMarkCircleIcon>
 					</div>
 
@@ -239,8 +264,9 @@ const ItemDetail = (prop: {
 							{ALLSTORES.map((store) => {
 								return (
 									<p
+										onClick={priceClicked.bind(null, store)}
 										key={store.id}
-										className="h-7 text-gray-800 text-lg font-bold rounded-full flex justify-center items-center w-16"
+										className="h-7 text-gray-800 text-lg font-bold rounded-full flex justify-center items-center w-16 cursor-pointer"
 									>
 										{store.name}
 									</p>
@@ -262,22 +288,74 @@ const ItemDetail = (prop: {
 												</p>
 												{row.prices.prices.map((price) => {
 													return (
-														<p
-															key={price.store.id}
-															onClick={priceClicked.bind(
-																null,
-																price.store
-															)}
-															className={`h-7 rounded-full cursor-pointer flex justify-center items-center w-16 ${
+														<div
+															className={`h-7 space-x-1 rounded-full flex flex-row justify-center items-center w-16 ${
 																price.text !== '-' &&
 																price.store.id ===
 																	row.prices.best?.id
 																	? 'border-2 border-green-500'
 																	: 'border-2 border-white'
 															}`}
+															key={price.store.id}
 														>
-															{price.text}
-														</p>
+															<p>{price.text}</p>
+															{price.store.id === 'goat' &&
+															price.text !== '-' ? (
+																<QuestionMarkCircleIcon
+																	onClick={setTelltipMessage.bind(
+																		null,
+																		{
+																			title: 'GOAT prices',
+																			message: (
+																				<ul className="list-inside text-left">
+																					<li>
+																						*GOAT prices
+																						always show
+																						the price
+																						for new
+																						items with
+																						undamaged
+																						boxes and
+																						regular
+																						shipping. To
+																						visit their
+																						website for
+																						more price
+																						options
+																						click on
+																						"GOAT" in
+																						the first
+																						row.
+																					</li>
+																					<br />
+																					<li>
+																						*GOAT
+																						provides
+																						prices in
+																						USD so the
+																						EUR and GBP
+																						prices are
+																						only
+																						estimates
+																						based on
+																						standard
+																						exchange
+																						rates and
+																						may differ
+																						from the
+																						amount you
+																						pay at
+																						checkout
+																					</li>
+																				</ul>
+																			),
+																			show: true,
+																		}
+																	)}
+																	className="h-3 cursor-pointer text-gray-900 font-bold flex-shrink-0"
+																></QuestionMarkCircleIcon>
+															) : null}
+														</div>
 													)
 												})}
 												<p className="flex-grow"></p>

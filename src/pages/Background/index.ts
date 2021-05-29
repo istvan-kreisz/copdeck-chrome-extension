@@ -392,8 +392,6 @@ chrome.runtime.onInstalled.addListener(async () => {
 		addRefreshExchangeRatesAlarm(),
 		refreshExchangeRates(),
 	])
-	// todo: remove
-	await sendNotifications()
 })
 
 chrome.storage.onChanged.addListener(async function (changes, namespace) {
@@ -421,9 +419,6 @@ chrome.storage.onChanged.addListener(async function (changes, namespace) {
 	}
 })
 
-// add goat price options
-// add telltip about goat pricing
-// goat currency
 // todo: add proxy support
 
 // chrome.proxy.settings.set({ value: config, scope: 'regular' }, function () {
