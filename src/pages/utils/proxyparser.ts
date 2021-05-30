@@ -1,4 +1,5 @@
 import { Proxy } from './types'
+import { shuffleArray } from 'copdeck-scraper'
 
 function parse(input: string): Proxy[] {
 	return stringToArray(input).map(stringToProxy)
@@ -77,4 +78,24 @@ function stringify(proxies: Proxy[]): string {
 	return proxyStrings.join('\n')
 }
 
-export { parse, stringify }
+function pacFormat(proxies: Proxy[]): string {
+	const proxyStrings = proxies.map((proxy) => {
+		let string = ''
+		if (proxy.protocol === 'http') {
+			string = 'PROXY '
+		}
+		if (proxy.protocol === 'https') {
+			string = 'HTTPS '
+		}
+
+		let auth = proxy.auth
+		if (auth) {
+			string += `${auth.username}:${auth.password}@`
+		}
+		string += `${proxy.host}:${proxy.port}`
+		return string
+	})
+	return shuffleArray(proxyStrings).join('; ')
+}
+
+export { parse, stringify, pacFormat }

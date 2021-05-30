@@ -9,7 +9,7 @@ import { assert, string, is, boolean } from 'superstruct'
 import { APIConfig, Item, Proxy } from 'copdeck-scraper/dist/types'
 import { databaseCoordinator } from '../services/databaseCoordinator'
 import { Settings } from '../utils/types'
-import { parse } from '../utils/proxyparser'
+import { parse, pacFormat } from '../utils/proxyparser'
 import { log } from '../utils/logger'
 import { v4 as uuidv4 } from 'uuid'
 
@@ -18,6 +18,7 @@ const maxUpdateInterval = 1440
 const cacheAlarm = 'copdeckCacheAlarm'
 const refreshPricesAlarm = 'copdeckRefreshPricesAlarm'
 const refreshExchangeRatesAlarm = 'copdeckrefreshExchangeRatesAlarm'
+const proxyRotationAlarm = 'copdeckProxyRotationAlarm'
 const requestDelayMax = 1000
 
 const clearCache = async () => {
@@ -187,30 +188,29 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 		;(async () => {
 			try {
 				const settings = msg.settings.settings
-				// const proxyString = msg.settings.proxyString
+				const proxyString = msg.settings.proxyString
 				assert(settings, Settings)
-				// assert(proxyString, string())
+				assert(proxyString, string())
 				const dev = await getIsDevelopment()
 
-				// let proxyParseError
-				// if (proxyString) {
-				// 	try {
-				// 		settings.proxies = parse(proxyString)
-				// 	} catch (err) {
-				// 		settings.proxies = []
-				// 		proxyParseError = err['message'] ?? 'Invalid proxy format'
-				// 		log('proxy error', dev)
-				// 		log(err, dev)
-				// 	}
-				// }
+				let proxyParseError
+				if (proxyString) {
+					try {
+						settings.proxies = parse(proxyString)
+					} catch (err) {
+						settings.proxies = []
+						proxyParseError = err['message'] ?? 'Invalid proxy format'
+						log('proxy error', dev)
+						log(err, dev)
+					}
+				}
 				if (settings.updateInterval < minUpdateInterval) {
 					settings.updateInterval = minUpdateInterval
 				} else if (settings.updateInterval > maxUpdateInterval) {
 					settings.updateInterval = maxUpdateInterval
 				}
 				await saveSettings(settings)
-				// sendResponse(proxyParseError)
-				sendResponse()
+				sendResponse(proxyParseError)
 			} catch (err) {
 				console.log(err)
 				sendResponse(err)
@@ -379,6 +379,10 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
 		await clearCache()
 	} else if (alarm.name === refreshExchangeRatesAlarm) {
 		await refreshExchangeRates()
+	} else if (alarm.name === proxyRotationAlarm) {
+		const { getSettings, getIsDevelopment } = databaseCoordinator()
+		const [settings, dev] = await Promise.all([getSettings(), getIsDevelopment()])
+		await updateProxies(settings.proxies, dev)
 	}
 })
 
@@ -395,16 +399,94 @@ chrome.runtime.onInstalled.addListener(async () => {
 	])
 })
 
+const startProxyRotation = async () => {
+	return new Promise<void>((resolve, reject) => {
+		chrome.alarms.get(proxyRotationAlarm, (a) => {
+			if (!a) {
+				chrome.alarms.create(proxyRotationAlarm, {
+					periodInMinutes: 60,
+				})
+			}
+			resolve()
+		})
+	})
+}
+
+const resetProxyRotation = async () => {
+	return new Promise<void>((resolve, reject) => {
+		chrome.alarms.clear(proxyRotationAlarm, () => {
+			resolve()
+		})
+	})
+}
+
+const updateProxies = async (proxies: Proxy[], dev: boolean): Promise<void> => {
+	const proxiesString = pacFormat(proxies)
+	const pacScriptConfig = {
+		mode: 'pac_script',
+		pacScript: {
+			data: `function FindProxyForURL(url, host) {
+                if (dnsDomainIs(host, ".goat.com") || shExpMatch(host, '*2fwotdvm2o-dsn.algolia.net*') || shExpMatch(host, '*apiv2.klekt.com*') || dnsDomainIs(host, ".stockx.com")) {
+                    return "${proxiesString}";
+                } else {
+                    return "DIRECT";
+                }
+            }`,
+		},
+	}
+
+	return new Promise(async (resolve, reject) => {
+		chrome.proxy.settings.set({ value: pacScriptConfig, scope: 'regular' }, () => {
+			resolve()
+		})
+	})
+}
+
+const updateProxySettings = async (proxies: Proxy[], dev: boolean): Promise<void> => {
+	if (proxies.length < 2) {
+		try {
+			await resetProxyRotation()
+		} catch (err) {}
+
+		if (proxies.length === 0) {
+			return new Promise<void>((resolve, reject) => {
+				chrome.proxy.settings.clear({}, () => {
+					resolve()
+				})
+			})
+		}
+	}
+
+	await updateProxies(proxies, dev)
+	if (proxies.length > 1) {
+		await startProxyRotation()
+	}
+	if (dev) {
+		return new Promise<void>((resolve, reject) => {
+			chrome.proxy.settings.get({}, function (config) {
+				log(JSON.stringify(config), dev)
+				resolve()
+			})
+		})
+	}
+}
+
+chrome.proxy.onProxyError.addListener(async (err) => {
+	const { getIsDevelopment } = databaseCoordinator()
+	const dev = await getIsDevelopment()
+
+	log('proxy error', dev)
+	log(err, dev)
+})
+
 chrome.storage.onChanged.addListener(async function (changes, namespace) {
 	const { getIsDevelopment } = databaseCoordinator()
 	const dev = await getIsDevelopment()
 
 	if (dev) {
 		for (let [key, { oldValue, newValue }] of Object.entries(changes)) {
-			console.log(
-				`Storage key "${key}" in namespace "${namespace}" changed.`,
-				`Old value was "${oldValue}", new value is "${newValue}".`
-			)
+			log(`Storage key "${key}" in namespace "${namespace}" changed.`, dev)
+			log(`Old value was "${oldValue}", new value is "${newValue}".`, dev)
 		}
 	}
 
@@ -417,32 +499,15 @@ chrome.storage.onChanged.addListener(async function (changes, namespace) {
 		if (settingsOld.updateInterval !== settingsNew.updateInterval) {
 			await addrefreshPricesAlarm(true)
 		}
+		if (JSON.stringify(settingsOld.proxies) !== JSON.stringify(settingsNew.proxies)) {
+			await updateProxySettings(settingsNew.proxies, dev)
+		}
 	}
 })
 
-// todo: add proxy support
+// add goat bid
+// change goat currency
+// add notification when visiting site
+// Access to fetch at 'https://2fwotdvm2o-dsn.algolia.net/1/indexes/*/queries?x-algolia-agent=Algolia%20for%20JavaScript%20(3.35.1)%3B%20Browser%20(lite)%3B%20JS%20Helper%20(3.2.2)%3B%20react%20(16.13.1)%3B%20react-instantsearch%20(6.8.2)&x-algolia-application-id=2FWOTDVM2O&x-algolia-api-key=ac96de6fef0e02bb95d433d8d5c7038a' from origin 'chrome-extension://ibioabnjbfamlcbnhjhdhmjclcidodbo' has been blocked by CORS policy: Request header field mode is not allowed by Access-Control-Allow-Header
 
-// chrome.proxy.settings.set({ value: config, scope: 'regular' }, function () {
-// 	chrome.proxy.settings.get({}, function (config) {
-// 		console.log(config.value, config.value.host)
-// 	})
-// })
-
-// const pacScriptConfig = {
-// 	mode: 'pac_script',
-// 	pacScript: {
-// 		data: `function FindProxyForURL(url, host) {
-//         if (host === "google.com") {
-//           return "PROXY 117.242.147.89:57599";
-//         } else {
-//           return "DIRECT";
-//         }
-//       }`,
-// 	},
-// }
-
-// chrome.proxy.settings.set({ value: pacScriptConfig, scope: 'regular' }, () => {})
-
-// chrome.proxy.settings.get({ incognito: false }, function (config) {
-// 	console.log(JSON.stringify(config))
-// })
+// Cookie: _csrf=lKuDAaP8CZOqw-LoxVrr2y5Z; csrf=xQDiRJay-RiSSEinY5fgM631qqcCElyVhLAs; _sneakers_session=v89yqHWNt2U3vHU2Rls%2F%2B0Nb66XdCEAQNBwOVGDxBx6kVnDDtALbhmo9KwDph1EISUTlerOAefWW%2FWpUuq7N--EjpYsea%2BbyqFTy3b--r7Y9SJYqJsSoxqkVP64HeA%3D%3D; ConstructorioID_client_id=e9866fda-fd26-4f06-8e18-b31e22d1ee0b; currency=JPY; OptanonConsent=isIABGlobal=false&datestamp=Sun+May+30+2021+12%3A09%3A31+GMT%2B0200+(Central+European+Summer+Time)&version=6.12.0&hosts=&consentId=ae7c1734-b0a0-4e58-b815-38e294f6e206&interactionCount=1&landingPath=NotLandingPage&groups=C0001%3A1%2CC0003%3A0%2CC0002%3A0%2CC0004%3A0; __stripe_mid=dca3168b-fbcc-428a-9214-4c2968f68bd34d2970; __stripe_sid=c77cc3fa-abf6-4196-a827-e3dd77e20259deb20a; OptanonAlertBoxClosed=2021-05-30T10:09:31.293Z

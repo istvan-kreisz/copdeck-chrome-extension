@@ -1,8 +1,7 @@
 {
 	"manifest_version": 3,
-	"name": "Chrome Extension with React & Webpack",
-	"permissions": ["storage", "tabs", "scripting", "alarms", "notifications"],
-	"host_permissions": ["<all_urls>"],
+	"name": "CopDeck Price Monitor",
+	"permissions": ["storage", "scripting", "alarms", "notifications", "proxy"],
 	"background": { "service_worker": "background.bundle.js" },
 	"action": {
 		"default_popup": "popup.html",

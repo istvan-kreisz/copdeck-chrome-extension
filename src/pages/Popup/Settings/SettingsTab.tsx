@@ -14,7 +14,7 @@ const SettingsTab = (prop: {
 		}>
 	>
 }) => {
-	// const proxyTextField = useRef<HTMLTextAreaElement>(null)
+	const proxyTextField = useRef<HTMLTextAreaElement>(null)
 	const currencySelector = useRef<HTMLDivElement>(null)
 
 	const [updateInterval, setUpdateInterval] = useState('5')
@@ -37,10 +37,10 @@ const SettingsTab = (prop: {
 			await listenToSettingsChanges((settings) => {
 				setSelectedCurrency(settings.currency)
 
-				// const proxyField = proxyTextField.current
-				// if (proxyField) {
-				// 	proxyField.value = stringify(settings.proxies)
-				// }
+				const proxyField = proxyTextField.current
+				if (proxyField) {
+					proxyField.value = stringify(settings.proxies)
+				}
 
 				setNotificationFrequency(`${settings.notificationFrequency}`)
 				setUpdateInterval(`${settings.updateInterval}`)
@@ -63,16 +63,16 @@ const SettingsTab = (prop: {
 						updateInterval: interval,
 						notificationFrequency: notificationInterval,
 					},
-					// proxyString: proxyTextField.current?.value ?? '',
+					proxyString: proxyTextField.current?.value ?? '',
 				},
 			},
 			(response) => {
 				if (response) {
-					// setTelltipMessage({
-					// 	title: 'Invalid proxy format',
-					// 	message: response,
-					// 	show: true,
-					// })
+					setTelltipMessage({
+						title: 'Invalid proxy format',
+						message: response,
+						show: true,
+					})
 				} else {
 					prop.setToastMessage({ message: 'Settings saved', show: true })
 				}
@@ -135,7 +135,7 @@ const SettingsTab = (prop: {
 						})}
 					</div>
 
-					{/* <div className="flex flex-row items-center mt-2 mb-1 space-x-1">
+					<div className="flex flex-row items-center mt-2 mb-1 space-x-1">
 						<h3 className="text-base font-bold">Proxies</h3>
 						<QuestionMarkCircleIcon
 							onClick={setTelltipMessage.bind(null, {
@@ -151,12 +151,12 @@ const SettingsTab = (prop: {
 						ref={proxyTextField}
 						style={{ resize: 'none' }}
 						id="proxies"
-						placeholder="Add a list of proxies here, separated by commas"
+						placeholder="Add a list of proxies here, separated by commas, spaces or newlines"
 						name="proxies"
 						rows={2}
 						className="w-full bg-white rounded-xl border border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 text-base outline-none leading-6"
 					></textarea>
- */}
+
 					<div className="flex flex-row items-center mt-2 mb-1 space-x-1">
 						<h3 className="text-base font-bold">Refresh frequency</h3>
 						<QuestionMarkCircleIcon
