@@ -1,4 +1,4 @@
-import { Proxy } from './types'
+import { Proxy } from 'copdeck-scraper/dist/types'
 import { shuffleArray } from 'copdeck-scraper'
 
 function parse(input: string): Proxy[] {

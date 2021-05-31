@@ -1,7 +1,7 @@
 {
 	"manifest_version": 3,
 	"name": "CopDeck Price Monitor",
-	"permissions": ["storage", "scripting", "alarms", "notifications", "proxy"],
+	"permissions": ["storage", "alarms", "notifications", "proxy", "tabs"],
 	"background": { "service_worker": "background.bundle.js" },
 	"action": {
 		"default_popup": "popup.html",

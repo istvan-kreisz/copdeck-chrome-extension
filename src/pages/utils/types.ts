@@ -1,4 +1,4 @@
-import { string, number, object, optional, Infer, array } from 'superstruct'
+import { number, object, Infer, array, record, string } from 'superstruct'
 import { Currency, Proxy } from 'copdeck-scraper/dist/types'
 
 const Settings = object({
@@ -10,4 +10,8 @@ const Settings = object({
 
 type Settings = Infer<typeof Settings>
 
-export { Settings, Proxy }
+const ProxyNotificationUpdates = record(string(), number())
+
+type ProxyNotificationUpdates = Infer<typeof ProxyNotificationUpdates>
+
+export { Settings, ProxyNotificationUpdates }

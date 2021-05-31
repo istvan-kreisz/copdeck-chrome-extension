@@ -6,7 +6,7 @@ import {
 	didFailToFetchAllStorePrices,
 } from 'copdeck-scraper'
 import { assert, string, is, boolean } from 'superstruct'
-import { APIConfig, Item, Proxy } from 'copdeck-scraper/dist/types'
+import { ALLSTORES, APIConfig, Item, Proxy, Store } from 'copdeck-scraper/dist/types'
 import { databaseCoordinator } from '../services/databaseCoordinator'
 import { Settings } from '../utils/types'
 import { parse, pacFormat } from '../utils/proxyparser'
@@ -360,7 +360,7 @@ const sendNotifications = async () => {
 					priority: 2,
 				},
 				() => {
-					console.log('Last error:', chrome.runtime.lastError)
+					console.log('Error:', chrome.runtime.lastError)
 				}
 			)
 		})
@@ -505,9 +505,53 @@ chrome.storage.onChanged.addListener(async function (changes, namespace) {
 	}
 })
 
-// add goat bid
-// change goat currency
-// add notification when visiting site
-// Access to fetch at 'https://2fwotdvm2o-dsn.algolia.net/1/indexes/*/queries?x-algolia-agent=Algolia%20for%20JavaScript%20(3.35.1)%3B%20Browser%20(lite)%3B%20JS%20Helper%20(3.2.2)%3B%20react%20(16.13.1)%3B%20react-instantsearch%20(6.8.2)&x-algolia-application-id=2FWOTDVM2O&x-algolia-api-key=ac96de6fef0e02bb95d433d8d5c7038a' from origin 'chrome-extension://ibioabnjbfamlcbnhjhdhmjclcidodbo' has been blocked by CORS policy: Request header field mode is not allowed by Access-Control-Allow-Header
+const sendProxyNotificationIfNeeded = async (url?: string) => {
+	const store = ALLSTORES.find(
+		(store) => url?.includes('//' + store.id + '.') || url?.includes('www.' + store.id + '.')
+	)
 
+	if (store) {
+		const { getProxyNotificationUpdates, saveProxyNotificationUpdates } = databaseCoordinator()
+		const [proxyNotificationUpdates] = await Promise.all([getProxyNotificationUpdates()])
+		const lastUpdate = proxyNotificationUpdates[store.id]
+		if (!lastUpdate || (lastUpdate && isOlderThan(lastUpdate, 72, 'hours'))) {
+			chrome.notifications.create(
+				'copdeckproxywarning',
+				{
+					type: 'basic',
+					iconUrl: 'icon-48.png',
+					title: 'Active Proxy Warning',
+					message: `You have proxies enabled for this site. You can disable them in CopDeck extension settings.`,
+					priority: 2,
+				},
+				() => {
+					console.log('Error:', chrome.runtime.lastError)
+				}
+			)
+
+			proxyNotificationUpdates[store.id] = new Date().getTime()
+			saveProxyNotificationUpdates(proxyNotificationUpdates)
+		}
+	}
+}
+
+chrome.tabs.onActivated.addListener(function (activeInfo) {
+	chrome.tabs.get(activeInfo.tabId, function (tab) {
+		;(async () => {
+			await sendProxyNotificationIfNeeded(tab.url)
+		})()
+	})
+})
+
+chrome.tabs.onUpdated.addListener((tabId, change, tab) => {
+	if (tab.active && change.url) {
+		;(async () => {
+			await sendProxyNotificationIfNeeded(change.url)
+		})()
+	}
+})
+
+// add goat bid
+// add proxy toggle
+// change goat currency
 // Cookie: _csrf=lKuDAaP8CZOqw-LoxVrr2y5Z; csrf=xQDiRJay-RiSSEinY5fgM631qqcCElyVhLAs; _sneakers_session=v89yqHWNt2U3vHU2Rls%2F%2B0Nb66XdCEAQNBwOVGDxBx6kVnDDtALbhmo9KwDph1EISUTlerOAefWW%2FWpUuq7N--EjpYsea%2BbyqFTy3b--r7Y9SJYqJsSoxqkVP64HeA%3D%3D; ConstructorioID_client_id=e9866fda-fd26-4f06-8e18-b31e22d1ee0b; currency=JPY; OptanonConsent=isIABGlobal=false&datestamp=Sun+May+30+2021+12%3A09%3A31+GMT%2B0200+(Central+European+Summer+Time)&version=6.12.0&hosts=&consentId=ae7c1734-b0a0-4e58-b815-38e294f6e206&interactionCount=1&landingPath=NotLandingPage&groups=C0001%3A1%2CC0003%3A0%2CC0002%3A0%2CC0004%3A0; __stripe_mid=dca3168b-fbcc-428a-9214-4c2968f68bd34d2970; __stripe_sid=c77cc3fa-abf6-4196-a827-e3dd77e20259deb20a; OptanonAlertBoxClosed=2021-05-30T10:09:31.293Z
